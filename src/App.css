@@ -305,7 +305,8 @@ tbody tr:hover {
 
   .search-form-results button {
     font-size: 12px; /* 검색 버튼 글자 크기 줄임 */
-    padding: 8px 12px; /* 버튼 패딩 조정 */
+    padding: 8px 10px; /* 버튼 패딩 조정 */
+    white-space: nowrap; /* 텍스트 줄 바꿈 방지 */
   }
 }
 
