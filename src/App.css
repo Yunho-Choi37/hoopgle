@@ -302,6 +302,11 @@ tbody tr:hover {
   .hide-on-mobile-results {
     display: none; /* 검색 결과 페이지에서 모바일일 때 숨김 */
   }
+
+  .search-form-results button {
+    font-size: 12px; /* 검색 버튼 글자 크기 줄임 */
+    padding: 8px 12px; /* 버튼 패딩 조정 */
+  }
 }
 
 .data-source-container {
