@@ -401,12 +401,12 @@ function App() {
                 {displayRecords.map((record) => (
                   <div key={record.id} className="player-card">
                     <div className="card-header">
-                      {record['선수명']}no.{record['등번호']} ({record['소속팀']}) {record['vs 상대팀']}
+                      {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> (<span className="team-name-mobile">{record['소속팀']}</span>) {record['vs 상대팀']}
                     </div>
                     <div className="card-body">
                       {DISPLAY_COLUMNS.filter(col => !['선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
                         <div key={`${record.id}-${colKey}`} className="card-item">
-                          <span className="label">{COLUMN_MAPPING[colKey]}</span>
+                          <span className={`label ${['PTS', '2P%', '3P%', 'AST'].includes(COLUMN_MAPPING[colKey]) ? 'blue-label' : ''}`}>{COLUMN_MAPPING[colKey]}</span>
                           <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
                         </div>
                       ))}
