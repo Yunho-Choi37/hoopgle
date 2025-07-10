@@ -279,6 +279,21 @@ tbody tr:hover {
   color: #202124;
 }
 
+.jersey-number {
+  color: #FDB813; /* Hoopgle 노란색 */
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.team-name-mobile {
+  color: #191970; /* Hoopgle 파란색 */
+  font-weight: bold;
+}
+
+.blue-label {
+  color: #191970; /* Hoopgle 파란색 */
+}
+
 /* Responsive: Hide table on small screens */
 @media (max-width: 768px) {
   .desktop-table {
