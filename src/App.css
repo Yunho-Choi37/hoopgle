@@ -290,7 +290,7 @@ tbody tr:hover {
   font-weight: bold;
 }
 
-.blue-label {
+.card-item .blue-label {
   color: #191970; /* Hoopgle 파란색 */
 }
 
