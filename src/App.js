@@ -365,7 +365,7 @@ function App() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <button type="submit">검색</button>
-              <button type="button" onClick={handleGoToDetailPage}>I'm Hooping</button> {/* New button */}
+              <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">I'm Hooping</button> {/* New button */}
             </form>
           </div>
           {displayRecords.length > 0 ? (

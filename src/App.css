@@ -298,6 +298,10 @@ tbody tr:hover {
   .search-bar input {
     padding: 12px 18px;
   }
+
+  .hide-on-mobile-results {
+    display: none; /* 검색 결과 페이지에서 모바일일 때 숨김 */
+  }
 }
 
 .data-source-container {
