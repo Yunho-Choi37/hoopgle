@@ -92,12 +92,14 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  padding: 0; /* 내부 패딩 제거 */
+  line-height: 1; /* 텍스트 높이 고정 */
+  flex-shrink: 0; /* 크기 고정 */
 }
 
 .logo-small {
   font-size: 20px;
   font-weight: bold;
-  margin-right: 20px; /* 검색 폼과의 간격 유지 */
   cursor: pointer;
 }
 
@@ -145,7 +147,6 @@
   padding: 10px;
   border-radius: 20px;
   border: 1px solid #dfe1e5;
-  margin-right: 10px;
 }
 
 .search-form-results button {
