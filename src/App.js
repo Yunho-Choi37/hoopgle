@@ -286,7 +286,7 @@ function App() {
         });
 
       if (uniquePlayersInTeam.length > 0) {
-        setUniquePlayers(uniquePlayerInTeam);
+        setUniquePlayers(uniquePlayersInTeam);
         setNeedsSelection(true);
         setIsTeamSearchMode(true); // Set team search mode
         return; // Exit after team search
