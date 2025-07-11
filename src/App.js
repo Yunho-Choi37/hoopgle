@@ -374,15 +374,29 @@ function App() {
         <div className="selection-container">
           <h2>선택하세요.</h2>
           <ul className="selection-list">
-            {uniquePlayers.map(playerGroup => (
-              <li 
-                key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`}
-                onClick={() => isTeamSearchMode ? handlePlayerSelectFromTeam(playerGroup['선수명'], playerGroup['소속팀']) : handlePlayerSelect(playerGroup)}
-              >
-                <span className="player-name">{playerGroup[0]['선수명']}</span>
-                <span className="team-name">({playerGroup[0]['소속팀']})</span>
-              </li>
-            ))}
+            {isTeamSearchMode ? (
+              // Render for team search results (list of unique player objects)
+              uniquePlayers.map(player => (
+                <li 
+                  key={`${player['선수명']}_${player['등번호']}_${player['소속팀']}`}
+                  onClick={() => handlePlayerSelectFromTeam(player['선수명'], player['소속팀'])}
+                >
+                  <span className="player-name">{player['선수명']}</span>
+                  <span className="team-name">({player['소속팀']})</span>
+                </li>
+              ))
+            ) : (
+              // Render for player search results (list of arrays of records)
+              uniquePlayers.map(playerGroup => (
+                <li 
+                  key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`}
+                  onClick={() => handlePlayerSelect(playerGroup)}
+                >
+                  <span className="player-name">{playerGroup[0]['선수명']}</span>
+                  <span className="team-name">({playerGroup[0]['소속팀']})</span>
+                </li>
+              ))
+            )}
           </ul>
         </div>
       ) : !showResults ? (
