@@ -77,11 +77,11 @@
   margin-bottom: 20px;
   border-bottom: 1px solid #ebebeb;
   padding-bottom: 10px;
-  position: relative; /* For positioning the back button */
+  gap: 10px; /* 요소들 간의 간격 조정 */
 }
 
 .back-button {
-  background-color: black;
+  background-color: #4285F4; /* 검색 버튼과 동일한 파란색 */
   border: none;
   border-radius: 50%;
   color: white;
@@ -92,19 +92,13 @@
   justify-content: center;
   align-items: center;
   cursor: pointer;
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10; /* Ensure it's above other elements */
 }
 
 .logo-small {
   font-size: 20px;
   font-weight: bold;
-  margin-right: 20px;
+  margin-right: 20px; /* 검색 폼과의 간격 유지 */
   cursor: pointer;
-  margin-left: 40px; /* Adjust for back button */
 }
 
 .selection-container {
