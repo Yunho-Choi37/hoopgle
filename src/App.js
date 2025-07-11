@@ -527,8 +527,8 @@ function App() {
                     </div>
                     <div className="card-body">
                       {DISPLAY_COLUMNS.filter(col => !['선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
-                        <div key={`${record.id}-${colKey}`} className="card-item">
-                          <span className={`label ${['PTS', '2P%', '3P%', 'AST'].includes(COLUMN_MAPPING[colKey]) ? 'blue-label' : ''}`}>{COLUMN_MAPPING[colKey]}</span>
+                        <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '어시스트'].includes(colKey) ? 'highlight-yellow' : ''}`}>
+                          <span className="label">{COLUMN_MAPPING[colKey]}</span>
                           <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
                         </div>
                       ))}
