@@ -1,0 +1,365 @@
+.App {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align items to the top */
+  min-height: 100vh;
+  background-color: #fff;
+  padding-top: 5vh; /* Add some padding to the top */
+}
+
+.search-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.logo {
+  font-size: 60px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.search-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.search-bar {
+  width: 100%;
+  max-width: 584px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.search-bar input {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 24px;
+  border: 1px solid #dfe1e5;
+  font-size: 16px;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  box-sizing: border-box; /* Prevent overflow */
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.buttons button {
+  background-color: #f8f9fa;
+  border: 1px solid #f8f9fa;
+  border-radius: 4px;
+  color: #3c4043;
+  font-family: arial,sans-serif;
+  font-size: 14px;
+  margin: 11px 4px;
+  padding: 0 16px;
+  line-height: 27px;
+  height: 36px;
+  min-width: 54px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.results-container {
+  width: 95%;
+  padding: 20px;
+}
+
+.results-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ebebeb;
+  padding-bottom: 10px;
+}
+
+.logo-small {
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 20px;
+  cursor: pointer;
+}
+
+.selection-container {
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.selection-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+.selection-list li {
+  background-color: #f8f9fa;
+  border: 1px solid #dfe1e5;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.selection-list li:hover {
+  background-color: #e8f0fe;
+}
+
+.selection-list .player-name {
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.selection-list .team-name {
+  color: #5f6368;
+}
+
+.search-form-results {
+  display: flex;
+  gap: 10px; /* Add 10px gap between flex items */
+}
+
+.search-form-results input {
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #dfe1e5;
+  margin-right: 10px;
+}
+
+.search-form-results button {
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  background-color: #4285F4;
+  color: white;
+  cursor: pointer;
+}
+
+/* New Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: white;
+  font-size: 14px;
+}
+
+thead {
+  background-color: #fff; /* Remove background */
+  color: #80868b; /* Lighter text for header */
+}
+
+th, td {
+  padding: 12px 4px;
+  border: none; /* Remove all borders */
+  text-align: center;
+  border-bottom: 1px solid #e8eaed; /* Add bottom border */
+}
+
+th {
+  font-weight: normal;
+  font-size: 12px; /* Smaller font for header */
+}
+
+
+
+tbody tr:hover {
+  background-color: #f8f9fa; /* Subtle hover effect */
+}
+
+.hoopgle-navy { color: #191970; } /* Midnight Blue */
+.hoopgle-yellow { color: #FDB813; } /* Rich Yellow */
+.hoopgle-red { color: #B22222; } /* Firebrick Red */
+
+
+.name-column {
+  min-width: 70px;
+  text-align: left;
+}
+
+.ranking-container {
+  margin-top: 40px;
+  width: 100%;
+  max-width: 584px;
+  text-align: center;
+}
+
+.ranking-container h3 {
+  color: #3c4043;
+  margin-bottom: 15px;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  border-radius: 8px;
+  overflow: hidden; /* Ensures rounded corners apply to children */
+}
+
+.ranking-table th,
+.ranking-table td {
+  padding: 10px 5px;
+  border-bottom: 1px solid #e8eaed;
+  text-align: center;
+  font-size: 13px;
+}
+
+.ranking-table thead {
+  background-color: #f8f9fa;
+  color: #5f6368;
+}
+
+.ranking-table th {
+  font-weight: normal;
+}
+
+.ranking-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.ranking-table tbody tr:hover {
+  background-color: #f0f0f0;
+}
+
+/* Card View for Mobile */
+.cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.player-card {
+  background-color: #fff;
+  border: 1px solid #dfe1e5;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.card-header {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.card-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.card-item {
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.card-item .label {
+  font-size: 0.8em; /* 작게 */
+  color: #5f6368;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.card-item .value {
+  font-size: 1.2em; /* 크게 */
+  font-weight: bold; /* 굵게 */
+  color: #202124;
+}
+
+.jersey-number {
+  color: #FDB813; /* Hoopgle 노란색 */
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.team-name-mobile {
+  color: #191970; /* Hoopgle 파란색 */
+  font-weight: bold;
+}
+
+.card-item .blue-label {
+  color: #191970; /* Hoopgle 파란색 */
+}
+
+/* Responsive: Hide table on small screens */
+@media (max-width: 768px) {
+  .desktop-table {
+    display: none;
+  }
+
+  .logo {
+    font-size: 48px; /* 모바일 화면에서 로고 크기 조정 */
+    margin-bottom: 30px;
+  }
+
+  .search-container {
+    padding: 0 15px; /* 좌우 여백 추가 */
+    box-sizing: border-box;
+  }
+
+  .search-bar input {
+    padding: 12px 18px;
+  }
+
+  .hide-on-mobile-results {
+    display: none; /* 검색 결과 페이지에서 모바일일 때 숨김 */
+  }
+
+  .search-form-results button {
+    font-size: 12px; /* 검색 버튼 글자 크기 줄임 */
+    padding: 8px 10px; /* 버튼 패딩 조정 */
+    white-space: nowrap; /* 텍스트 줄 바꿈 방지 */
+  }
+}
+
+.data-source-container {
+  margin-top: 20vh; /* 화면 하단에 가깝게 배치 */
+  font-size: 14px;
+  color: #5f6368;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 중앙 정렬 */
+}
+
+.data-source-wrapper {
+  border: 1px solid #dadce0; /* 전체를 감싸는 테두리 */
+  padding: 8px 12px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.data-source-container .kssbf-link {
+  font-weight: bold;
+  color: #FDB813; /* Hoopgle 노란색 */
+  text-decoration: none;
+  border: 1px solid #dadce0; /* KSSBF 글자 자체에 테두리 추가 */
+  padding: 5px 8px; /* 테두리 안쪽 여백 */
+  border-radius: 5px;
+  margin-left: 5px;
+  transition: none;
+}
+
+.data-source-container .kssbf-link:hover {
+  background-color: transparent;
+}
+
+/* Responsive: Hide cards on large screens */
+@media (min-width: 769px) {
+  .cards-container {
+    display: none;
+  }
+}
