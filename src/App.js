@@ -202,6 +202,7 @@ function App() {
   const [highSchoolRankings, setHighSchoolRankings] = useState([]);
   const [assistRankings, setAssistRankings] = useState([]); // 어시스트 랭킹 state
   const [showDetailPage, setShowDetailPage] = useState(false); // New state for detail page
+  const [isTeamSearchMode, setIsTeamSearchMode] = useState(false); // New state for team search mode
 
   // Fetch rankings on component mount
   useEffect(() => {
@@ -255,24 +256,63 @@ function App() {
     setDisplayRecords([]);
     setNeedsSelection(false);
     setShowResults(false);
+    setIsTeamSearchMode(false); // Reset team search mode
 
     if (!searchTerm.trim()) {
       return;
     }
 
-    const { data, error } = await supabase
+    let searchResults = [];
+    let searchError = null;
+
+    // 1. Try searching by team name
+    const teamSearchTerm = searchTerm.endsWith('학교') ? searchTerm : `${searchTerm}학교`;
+    const teamSearchTermShort = searchTerm.endsWith('중') ? searchTerm : `${searchTerm}중학교`;
+
+    const { data: teamData, error: teamError } = await supabase
+      .from('2025 주말리그 선수기록')
+      .select('*')
+      .or(`소속팀.ilike.%${teamSearchTerm}%,소속팀.ilike.%${searchTerm}%,소속팀.ilike.%${teamSearchTermShort}%`);
+
+    if (teamError) {
+      console.error('Error searching teams:', teamError);
+      searchError = teamError;
+    } else if (teamData && teamData.length > 0) {
+      // If team found, display unique players from that team
+      const uniquePlayersInTeam = Array.from(new Set(teamData.map(p => `${p['선수명']}_${p['등번호']}_${p['소속팀']}`)))
+        .map(key => {
+          const [name, no, team] = key.split('_');
+          return { '선수명': name, '등번호': no, '소속팀': team };
+        });
+
+      if (uniquePlayersInTeam.length > 0) {
+        setUniquePlayers(uniquePlayerInTeam);
+        setNeedsSelection(true);
+        setIsTeamSearchMode(true); // Set team search mode
+        return; // Exit after team search
+      }
+    }
+
+    // 2. If no team found or no players in team, try searching by player name
+    const { data: playerData, error: playerError } = await supabase
       .from('2025 주말리그 선수기록')
       .select('*')
       .ilike('선수명', `%${searchTerm}%`);
 
-    if (error) {
-      console.error('Error searching players:', error);
+    if (playerError) {
+      console.error('Error searching players:', playerError);
+      searchError = playerError;
+    } else {
+      searchResults = playerData;
+    }
+
+    if (searchError) {
       setShowResults(true); // Show error/empty message
       return;
     }
 
-    if (data && data.length > 0) {
-      const grouped = data.reduce((acc, player) => {
+    if (searchResults && searchResults.length > 0) {
+      const grouped = searchResults.reduce((acc, player) => {
         const key = `${player['선수명']}_${player['소속팀']}`;
         if (!acc[key]) {
           acc[key] = [];
@@ -302,6 +342,26 @@ function App() {
     setShowResults(true);
   };
 
+  const handlePlayerSelectFromTeam = async (playerName, playerTeam) => {
+    const { data, error } = await supabase
+      .from('2025 주말리그 선수기록')
+      .select('*')
+      .eq('선수명', playerName)
+      .eq('소속팀', playerTeam);
+
+    if (error) {
+      console.error('Error fetching player records:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      setDisplayRecords(processRecords(data));
+      setNeedsSelection(false);
+      setShowResults(true);
+      setIsTeamSearchMode(false); // Exit team search mode
+    }
+  };
+
   return (
     <div className="App">
       {showDetailPage ? (
@@ -315,7 +375,10 @@ function App() {
           <h2>선택하세요.</h2>
           <ul className="selection-list">
             {uniquePlayers.map(playerGroup => (
-              <li key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`} onClick={() => handlePlayerSelect(playerGroup)}>
+              <li 
+                key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`}
+                onClick={() => isTeamSearchMode ? handlePlayerSelectFromTeam(playerGroup['선수명'], playerGroup['소속팀']) : handlePlayerSelect(playerGroup)}
+              >
                 <span className="player-name">{playerGroup[0]['선수명']}</span>
                 <span className="team-name">({playerGroup[0]['소속팀']})</span>
               </li>
@@ -331,7 +394,7 @@ function App() {
             <div className="search-bar">
               <input
                 type="text"
-                placeholder="선수 이름으로 검색"
+                placeholder="선수 이름 또는 학교 이름으로 검색"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
