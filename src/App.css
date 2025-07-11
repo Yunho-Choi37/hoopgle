@@ -310,6 +310,11 @@ tbody tr:hover {
   color: #191970; /* Hoopgle 파란색 */
 }
 
+.card-item.highlight-yellow .label,
+.card-item.highlight-yellow .value {
+  color: #FDB813; /* Hoopgle 노란색 */
+}
+
 /* Responsive: Hide table on small screens */
 @media (max-width: 768px) {
   .desktop-table {
