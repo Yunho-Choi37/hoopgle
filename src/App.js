@@ -371,33 +371,49 @@ function App() {
           <button onClick={handleGoBackFromDetail}>뒤로 가기</button>
         </div>
       ) : needsSelection ? (
-        <div className="selection-container">
-          <h2>선택하세요.</h2>
-          <ul className="selection-list">
-            {isTeamSearchMode ? (
-              // Render for team search results (list of unique player objects)
-              uniquePlayers.map(player => (
-                <li 
-                  key={`${player['선수명']}_${player['등번호']}_${player['소속팀']}`}
-                  onClick={() => handlePlayerSelectFromTeam(player['선수명'], player['소속팀'])}
-                >
-                  <span className="player-name">{player['선수명']}</span>
-                  <span className="team-name">({player['소속팀']})</span>
-                </li>
-              ))
-            ) : (
-              // Render for player search results (list of arrays of records)
-              uniquePlayers.map(playerGroup => (
-                <li 
-                  key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`}
-                  onClick={() => handlePlayerSelect(playerGroup)}
-                >
-                  <span className="player-name">{playerGroup[0]['선수명']}</span>
-                  <span className="team-name">({playerGroup[0]['소속팀']})</span>
-                </li>
-              ))
-            )}
-          </ul>
+        <div className="results-container">
+          <div className="results-header">
+            <h1 className="logo-small" onClick={handleGoHome}>
+              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">g</span><span className="hoopgle-yellow">l</span><span className="hoopgle-navy">e</span>
+            </h1>
+            <form onSubmit={handleSearch} className="search-form-results">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button type="submit">검색</button>
+              <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">I'm Hooping</button>
+            </form>
+          </div>
+          <div className="selection-container">
+            <h2>선택하세요.</h2>
+            <ul className="selection-list">
+              {isTeamSearchMode ? (
+                // Render for team search results (list of unique player objects)
+                uniquePlayers.map(player => (
+                  <li 
+                    key={`${player['선수명']}_${player['등번호']}_${player['소속팀']}`}
+                    onClick={() => handlePlayerSelectFromTeam(player['선수명'], player['소속팀'])}
+                  >
+                    <span className="player-name">{player['선수명']}</span>
+                    <span className="team-name">({player['소속팀']})</span>
+                  </li>
+                ))
+              ) : (
+                // Render for player search results (list of arrays of records)
+                uniquePlayers.map(playerGroup => (
+                  <li 
+                    key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`}
+                    onClick={() => handlePlayerSelect(playerGroup)}
+                  >
+                    <span className="player-name">{playerGroup[0]['선수명']}</span>
+                    <span className="team-name">({playerGroup[0]['소속팀']})</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
         </div>
       ) : !showResults ? (
         <div className="search-container">
