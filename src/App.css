@@ -77,6 +77,26 @@
   margin-bottom: 20px;
   border-bottom: 1px solid #ebebeb;
   padding-bottom: 10px;
+  position: relative; /* For positioning the back button */
+}
+
+.back-button {
+  background-color: black;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 18px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10; /* Ensure it's above other elements */
 }
 
 .logo-small {
@@ -84,6 +104,7 @@
   font-weight: bold;
   margin-right: 20px;
   cursor: pointer;
+  margin-left: 40px; /* Adjust for back button */
 }
 
 .selection-container {

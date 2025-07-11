@@ -249,6 +249,25 @@ function App() {
     setSearchTerm('');
   };
 
+  const handleGoBack = () => {
+    if (showResults) {
+      // Currently showing player records
+      if (isTeamSearchMode) {
+        // If we came from a team search selection, go back to selection
+        setShowResults(false);
+        setNeedsSelection(true);
+        // searchTerm should remain to show the team search context
+      } else {
+        // Otherwise, go back to initial search
+        handleGoHome(); // This resets everything to initial search state
+      }
+    } else if (needsSelection) {
+      // Currently showing player selection
+      handleGoHome(); // Go back to initial search state
+    }
+    // No back action if on showDetailPage or initial search
+  };
+
   const handleSearch = async (event) => {
     event.preventDefault();
     // Reset states
@@ -373,6 +392,11 @@ function App() {
       ) : needsSelection ? (
         <div className="results-container">
           <div className="results-header">
+            {(showResults || needsSelection) && (
+              <button className="back-button" onClick={handleGoBack}>
+                &lt;
+              </button>
+            )}
             <h1 className="logo-small" onClick={handleGoHome}>
               <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">g</span><span className="hoopgle-yellow">l</span><span className="hoopgle-navy">e</span>
             </h1>
@@ -448,6 +472,11 @@ function App() {
       ) : (
         <div className="results-container">
           <div className="results-header">
+            {(showResults || needsSelection) && (
+              <button className="back-button" onClick={handleGoBack}>
+                &lt;
+              </button>
+            )}
             <h1 className="logo-small" onClick={handleGoHome}>
               <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">g</span><span className="hoopgle-yellow">l</span><span className="hoopgle-navy">e</span>
             </h1>
