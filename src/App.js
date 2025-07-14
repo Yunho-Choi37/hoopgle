@@ -465,6 +465,10 @@ function App() {
               <a href="http://www.kssbf.or.kr/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
                 KSSBF
               </a>
+              <span className="data-source-separator"> | </span>
+              <a href="https://www.koreabasketball.or.kr/main/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
+                KBA
+              </a>
             </span>
           </div>
 
