@@ -9,6 +9,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // 컬럼명 매핑
 const COLUMN_MAPPING = {
+  '대회명': 'Competition',
   '소속팀': 'Team',
   'vs 상대팀': 'vs',
   '선수명': 'name',
@@ -43,7 +44,7 @@ const COLUMN_MAPPING = {
 
 // 표시할 컬럼 순서 (원본 컬럼명 사용)
 const DISPLAY_COLUMNS = [
-  '소속팀', 'vs 상대팀', '선수명', '등번호', '1Q 득점', '2Q 득점', '3Q 득점', '4Q 득점', '연장 득점', '총득점',
+  '대회명', '소속팀', 'vs 상대팀', '선수명', '등번호', '1Q 득점', '2Q 득점', '3Q 득점', '4Q 득점', '연장 득점', '총득점',
   '플레잉 타임', '2점슛 성공', '2점슛 시도', '2점 성공률(%)', '3점슛 성공', '3점슛 시도',
   '3점 성공률(%)', '필드골 성공률(%)', '자유투 성공', '자유투 시도', '자유투 성공률(%)',
   '공격 리바운드', '수비 리바운드', '총 리바운드', '어시스트', '스틸', '굿디펜스', '블록슛',
@@ -52,6 +53,9 @@ const DISPLAY_COLUMNS = [
 
 // 레코드 처리 헬퍼 함수
 const processRecords = (records) => {
+  if (records && records.length > 0) {
+    console.log("First record from Supabase:", JSON.stringify(records[0], null, 2));
+  }
   return records.map(p => {
     const q1 = parseInt(p['1Q 득점']) || 0;
     const q2 = parseInt(p['2Q 득점']) || 0;
@@ -79,119 +83,7 @@ const processRecords = (records) => {
   });
 };
 
-// 랭킹 계산 헬퍼 함수
-const calculateRankings = (allRecords) => {
-  const highSchoolRecords = allRecords.filter(record => 
-    record['소속팀'] && 
-    record['소속팀'].includes('고등학교') && 
-    !record['소속팀'].includes('여자고등학교')
-  );
 
-  const playerStats = {};
-
-  highSchoolRecords.forEach(record => {
-    const playerKey = `${record['선수명']}-${record['등번호']}`;
-    if (!playerStats[playerKey]) {
-      playerStats[playerKey] = {
-        '선수명': record['선수명'],
-        '등번호': record['등번호'],
-        '소속팀': (record['소속팀'] || '').replace('고등학교', '고'),
-        totalPoints: 0,
-        gameCount: 0,
-        totalFGPercentage: 0,
-      };
-    }
-    
-    const q1 = parseInt(record['1Q 득점']) || 0;
-    const q2 = parseInt(record['2Q 득점']) || 0;
-    const q3 = parseInt(record['3Q 득점']) || 0;
-    const q4 = parseInt(record['4Q 득점']) || 0;
-    const ot = parseInt(record['연장 득점']) || 0;
-    const totalPointsInGame = q1 + q2 + q3 + q4 + ot;
-
-    playerStats[playerKey].totalPoints += totalPointsInGame;
-    playerStats[playerKey].gameCount += 1;
-    playerStats[playerKey].totalFGPercentage += (parseFloat(record['필드골 성공률(%)']) || 0);
-  });
-
-  const rankedPlayers = Object.values(playerStats)
-    .filter(player => player.gameCount > 0)
-    .map(player => ({
-      ...player,
-      averagePoints: player.totalPoints / player.gameCount,
-      averageFGPercentage: player.totalFGPercentage / player.gameCount,
-    }));
-
-  // Sort: Primary by averagePoints (desc), Secondary by averageFGPercentage (desc)
-  rankedPlayers.sort((a, b) => {
-    if (b.averagePoints !== a.averagePoints) {
-      return b.averagePoints - a.averagePoints;
-    }
-    return b.averageFGPercentage - a.averageFGPercentage; // Tie-breaker
-  });
-
-  // Assign ranks with ties
-  let currentRank = 1;
-  let prevPoints = null;
-  let prevFGPercentage = null;
-  for (let i = 0; i < rankedPlayers.length; i++) {
-    if (rankedPlayers[i].averagePoints !== prevPoints || rankedPlayers[i].averageFGPercentage !== prevFGPercentage) {
-      currentRank = i + 1;
-    }
-    rankedPlayers[i].rank = currentRank;
-    prevPoints = rankedPlayers[i].averagePoints;
-    prevFGPercentage = rankedPlayers[i].averageFGPercentage;
-  }
-
-  return rankedPlayers.slice(0, 10); // Top 10
-};
-
-// 어시스트 랭킹 계산 헬퍼 함수
-const calculateAssistRankings = (allRecords) => {
-  const highSchoolRecords = allRecords.filter(record => 
-    record['소속팀'] && 
-    record['소속팀'].includes('고등학교') && 
-    !record['소속팀'].includes('여자고등학교')
-  );
-
-  const playerStats = {};
-
-  highSchoolRecords.forEach(record => {
-    const playerKey = `${record['선수명']}-${record['등번호']}`;
-    if (!playerStats[playerKey]) {
-      playerStats[playerKey] = {
-        '선수명': record['선수명'],
-        '등번호': record['등번호'],
-        '소속팀': (record['소속팀'] || '').replace('고등학교', '고'),
-        totalAssists: 0,
-        gameCount: 0,
-      };
-    }
-    playerStats[playerKey].totalAssists += (parseInt(record['어시스트']) || 0);
-    playerStats[playerKey].gameCount += 1;
-  });
-
-  const rankedPlayers = Object.values(playerStats)
-    .filter(player => player.gameCount > 0)
-    .map(player => ({
-      ...player,
-      averageAssists: player.totalAssists / player.gameCount,
-    }));
-
-  rankedPlayers.sort((a, b) => b.averageAssists - a.averageAssists);
-
-  let currentRank = 1;
-  let prevAssists = null;
-  for (let i = 0; i < rankedPlayers.length; i++) {
-    if (rankedPlayers[i].averageAssists !== prevAssists) {
-      currentRank = i + 1;
-    }
-    rankedPlayers[i].rank = currentRank;
-    prevAssists = rankedPlayers[i].averageAssists;
-  }
-
-  return rankedPlayers.slice(0, 10);
-};
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -199,23 +91,37 @@ function App() {
   const [displayRecords, setDisplayRecords] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [needsSelection, setNeedsSelection] = useState(false);
-  const [highSchoolRankings, setHighSchoolRankings] = useState([]);
-  const [assistRankings, setAssistRankings] = useState([]); // 어시스트 랭킹 state
   const [showDetailPage, setShowDetailPage] = useState(false); // New state for detail page
   const [isTeamSearchMode, setIsTeamSearchMode] = useState(false); // New state for team search mode
+  const [selectedCompetition, setSelectedCompetition] = useState('전체'); // New state for selected competition filter
+  const [availableCompetitions, setAvailableCompetitions] = useState([]); // New state for competitions available for the current search/selection
+  const [selectedPlayerRecords, setSelectedPlayerRecords] = useState([]); // Stores all records for a selected player/team, unfiltered by competition
+  const [searchResultCompetitions, setSearchResultCompetitions] = useState([]); // New state for competitions found in search results
+
+  // Effect to filter displayRecords based on selectedCompetition and selectedPlayerRecords
+  useEffect(() => {
+    if (selectedPlayerRecords.length > 0) {
+      const filteredRecords = selectedCompetition === '전체'
+        ? selectedPlayerRecords
+        : selectedPlayerRecords.filter(record => record['대회명'] === selectedCompetition);
+      setDisplayRecords(processRecords(filteredRecords));
+    }
+  }, [selectedCompetition, selectedPlayerRecords]);
 
   // Fetch rankings on component mount
   useEffect(() => {
     const fetchRankings = async () => {
-      const { data, error } = await supabase
+      const { data: allRecords, error } = await supabase
         .from('2025 주말리그 선수기록')
         .select('*');
 
       if (error) {
         console.error('Error fetching all records for rankings:', error);
       } else {
-        setHighSchoolRankings(calculateRankings(data));
-        setAssistRankings(calculateAssistRankings(data)); // 어시스트 랭킹 계산
+        // setHighSchoolRankings(calculateRankings(allRecords));
+        // setAssistRankings(calculateAssistRankings(allRecords)); // 어시스트 랭킹 계산
+        const uniqueCompetitions = ['전체', ...new Set(allRecords.map(record => record['대회명']).filter(Boolean))];
+        // setCompetitions(uniqueCompetitions);
       }
     };
     fetchRankings();
@@ -276,6 +182,9 @@ function App() {
     setNeedsSelection(false);
     setShowResults(false);
     setIsTeamSearchMode(false); // Reset team search mode
+    setSelectedCompetition('전체'); // Reset selected competition filter
+    setAvailableCompetitions([]); // Reset available competitions
+    setSelectedPlayerRecords([]); // Reset selected player records
 
     if (!searchTerm.trim()) {
       return;
@@ -298,7 +207,7 @@ function App() {
       searchError = teamError;
     } else if (teamData && teamData.length > 0) {
       // If team found, display unique players from that team
-      const uniquePlayersInTeam = Array.from(new Set(teamData.map(p => `${p['선수명']}_${p['등번호']}_${p['소속팀']}`)))
+      const uniquePlayersInTeam = Array.from(new Set(teamData.map(p => `${p['선수명']}_${p['등번호']}_${p['소속팀']}`))) // Include team in key
         .map(key => {
           const [name, no, team] = key.split('_');
           return { '선수명': name, '등번호': no, '소속팀': team };
@@ -331,37 +240,80 @@ function App() {
     }
 
     if (searchResults && searchResults.length > 0) {
-      const grouped = searchResults.reduce((acc, player) => {
-        const key = `${player['선수명']}_${player['소속팀']}`;
+      const groupedByPlayerAndTeam = searchResults.reduce((acc, record) => {
+        const key = `${record['선수명']}_${record['소속팀']}`;
         if (!acc[key]) {
           acc[key] = [];
         }
-        acc[key].push(player);
+        acc[key].push(record);
         return acc;
       }, {});
 
-      const uniquePlayerGroups = Object.values(grouped);
+      const uniquePlayerTeamCombinations = Object.values(groupedByPlayerAndTeam);
+      console.log('handleSearch - searchResults:', searchResults);
 
-      if (uniquePlayerGroups.length > 1) {
-        setUniquePlayers(uniquePlayerGroups);
+      if (uniquePlayerTeamCombinations.length > 1) {
+        // Multiple players with the same name or same player in different teams
+        setUniquePlayers(uniquePlayerTeamCombinations.map(group => group[0])); // Show first record of each group for selection
         setNeedsSelection(true);
-      } else if (uniquePlayerGroups.length === 1) {
-        const records = uniquePlayerGroups[0];
-        setDisplayRecords(processRecords(records));
-        setShowResults(true);
+        // Extract competitions from searchResults for selection screen
+        const comps = ['전체', ...new Set(searchResults.map(record => record['대회명']).filter(Boolean))];
+        setSearchResultCompetitions(comps);
+        console.log('handleSearch - multiple players, uniquePlayers:', uniquePlayers);
+        console.log('handleSearch - multiple players, searchResultCompetitions:', comps);
+      } else if (uniquePlayerTeamCombinations.length === 1) {
+        // Single player-team combination found
+        const recordsForSelectedPlayer = uniquePlayerTeamCombinations[0];
+        setSelectedPlayerRecords(recordsForSelectedPlayer); // Store all records for this player
+
+        const comps = ['전체', ...new Set(recordsForSelectedPlayer.map(record => record['대회명']).filter(Boolean))];
+        setAvailableCompetitions(comps);
+        console.log('handleSearch - single player, selectedPlayerRecords:', recordsForSelectedPlayer);
+        console.log('handleSearch - single player, availableCompetitions:', comps);
+
+        // If only one competition or '전체' is selected by default, display records directly
+        if (comps.length <= 2) { // '전체' and one actual competition
+          setDisplayRecords(processRecords(recordsForSelectedPlayer));
+          setShowResults(true);
+          console.log('handleSearch - displaying records directly:', processRecords(recordsForSelectedPlayer));
+        } else {
+          // Otherwise, show competition selection for this player
+          setNeedsSelection(true);
+          console.log('handleSearch - needs competition selection');
+        }
       }
     } else {
       setShowResults(true); // No data, show empty message
+      console.log('handleSearch - no search results');
     }
   };
 
-  const handlePlayerSelect = (records) => {
-    setDisplayRecords(processRecords(records));
-    setNeedsSelection(false);
-    setShowResults(true);
+  const handlePlayerSelect = async (player) => {
+    console.log('handlePlayerSelect - selected player:', player);
+    const { data, error } = await supabase
+      .from('2025 주말리그 선수기록')
+      .select('*')
+      .eq('선수명', player['선수명'])
+      .eq('소속팀', player['소속팀']);
+
+    if (error) {
+      console.error('Error fetching player records:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      setSelectedPlayerRecords(data); // Store all records for this player
+      const comps = ['전체', ...new Set(data.map(record => record['대회명']).filter(Boolean))];
+      setAvailableCompetitions(comps);
+      setNeedsSelection(false);
+      setShowResults(true);
+      console.log('handlePlayerSelect - selectedPlayerRecords set:', data);
+      console.log('handlePlayerSelect - availableCompetitions set:', comps);
+    }
   };
 
   const handlePlayerSelectFromTeam = async (playerName, playerTeam) => {
+    console.log('handlePlayerSelectFromTeam - playerName:', playerName, 'playerTeam:', playerTeam);
     const { data, error } = await supabase
       .from('2025 주말리그 선수기록')
       .select('*')
@@ -374,10 +326,14 @@ function App() {
     }
 
     if (data && data.length > 0) {
-      setDisplayRecords(processRecords(data));
+      setSelectedPlayerRecords(data); // Store all records for this player
+      const comps = ['전체', ...new Set(data.map(record => record['대회명']).filter(Boolean))];
+      setAvailableCompetitions(comps);
       setNeedsSelection(false);
       setShowResults(true);
       setIsTeamSearchMode(false); // Exit team search mode
+      console.log('handlePlayerSelectFromTeam - selectedPlayerRecords set:', data);
+      console.log('handlePlayerSelectFromTeam - availableCompetitions set:', comps);
     }
   };
 
@@ -411,7 +367,23 @@ function App() {
             </form>
           </div>
           <div className="selection-container">
-            <h2>선택하세요.</h2>
+            <h2>대회 선택</h2>
+            <div className="competition-buttons-container">
+              {availableCompetitions.map((comp) => (
+                <button
+                  key={comp}
+                  className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
+                  onClick={() => {
+                    console.log('Competition button clicked:', comp);
+                    setSelectedCompetition(comp);
+                    setShowResults(true);
+                    setNeedsSelection(false);
+                  }}
+                >
+                  {comp}
+                </button>
+              ))}
+            </div>
             <ul className="selection-list">
               {isTeamSearchMode ? (
                 // Render for team search results (list of unique player objects)
@@ -426,13 +398,13 @@ function App() {
                 ))
               ) : (
                 // Render for player search results (list of arrays of records)
-                uniquePlayers.map(playerGroup => (
+                uniquePlayers.map(player => (
                   <li 
-                    key={`${playerGroup[0]['선수명']}_${playerGroup[0]['소속팀']}`}
-                    onClick={() => handlePlayerSelect(playerGroup)}
+                    key={`${player['선수명']}_${player['소속팀']}`}
+                    onClick={() => handlePlayerSelect(player)}
                   >
-                    <span className="player-name">{playerGroup[0]['선수명']}</span>
-                    <span className="team-name">({playerGroup[0]['소속팀']})</span>
+                    <span className="player-name">{player['선수명']}</span>
+                    <span className="team-name">({player['소속팀']})</span>
                   </li>
                 ))
               )}
@@ -490,12 +462,11 @@ function App() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <button type="submit">검색</button>
-              <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">I'm Hooping</button> {/* New button */}
+              <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">I'm Hooping</button>
             </form>
           </div>
           {displayRecords.length > 0 ? (
             <>
-              <h3 style={{ textAlign: 'left', margin: '10px 0', fontSize: '16px', fontWeight: 'normal' }}>2025 주말리그</h3>
               
               {/* Desktop Table */}
               <table className="desktop-table">
@@ -523,13 +494,13 @@ function App() {
 
               {/* Mobile Card View */}
               <div className="cards-container">
-                {displayRecords.map((record) => (
-                  <div key={record.id} className="player-card">
+                {displayRecords.map((record, index) => (
+                  <div key={index} className="player-card">
                     <div className="card-header">
-                      {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> (<span className="team-name-mobile">{record['소속팀']}</span>) {record['vs 상대팀']}
+                      {record['대회명']} - {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> (<span className="team-name-mobile">{record['소속팀']}</span>) {record['vs 상대팀']}
                     </div>
                     <div className="card-body">
-                      {DISPLAY_COLUMNS.filter(col => !['선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
+                      {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
                         <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '어시스트'].includes(colKey) ? 'highlight-yellow' : ''}`}>
                           <span className="label">{COLUMN_MAPPING[colKey]}</span>
                           <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
