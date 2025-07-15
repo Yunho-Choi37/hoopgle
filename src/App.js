@@ -91,12 +91,12 @@ function App() {
   const [displayRecords, setDisplayRecords] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [needsSelection, setNeedsSelection] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(''); // 'player' or 'competition'
   const [showDetailPage, setShowDetailPage] = useState(false); // New state for detail page
   const [isTeamSearchMode, setIsTeamSearchMode] = useState(false); // New state for team search mode
   const [selectedCompetition, setSelectedCompetition] = useState('전체'); // New state for selected competition filter
   const [availableCompetitions, setAvailableCompetitions] = useState([]); // New state for competitions available for the current search/selection
   const [selectedPlayerRecords, setSelectedPlayerRecords] = useState([]); // Stores all records for a selected player/team, unfiltered by competition
-  const [searchResultCompetitions, setSearchResultCompetitions] = useState([]); // New state for competitions found in search results
 
   // Effect to filter displayRecords based on selectedCompetition and selectedPlayerRecords
   useEffect(() => {
@@ -217,6 +217,7 @@ function App() {
         setUniquePlayers(uniquePlayersInTeam);
         setNeedsSelection(true);
         setIsTeamSearchMode(true); // Set team search mode
+        setSelectionMode('player'); // Set selection mode to player
         return; // Exit after team search
       }
     }
@@ -258,7 +259,7 @@ function App() {
         setNeedsSelection(true);
         // Extract competitions from searchResults for selection screen
         const comps = ['전체', ...new Set(searchResults.map(record => record['대회명']).filter(Boolean))];
-        setSearchResultCompetitions(comps);
+        setAvailableCompetitions(comps);
         console.log('handleSearch - multiple players, uniquePlayers:', uniquePlayers);
         console.log('handleSearch - multiple players, searchResultCompetitions:', comps);
       } else if (uniquePlayerTeamCombinations.length === 1) {
@@ -271,16 +272,10 @@ function App() {
         console.log('handleSearch - single player, selectedPlayerRecords:', recordsForSelectedPlayer);
         console.log('handleSearch - single player, availableCompetitions:', comps);
 
-        // If only one competition or '전체' is selected by default, display records directly
-        if (comps.length <= 2) { // '전체' and one actual competition
-          setDisplayRecords(processRecords(recordsForSelectedPlayer));
-          setShowResults(true);
-          console.log('handleSearch - displaying records directly:', processRecords(recordsForSelectedPlayer));
-        } else {
-          // Otherwise, show competition selection for this player
-          setNeedsSelection(true);
-          console.log('handleSearch - needs competition selection');
-        }
+        // Always show competition selection for this player
+        setNeedsSelection(true);
+        setSelectionMode('competition'); // Set selection mode to competition
+        console.log('handleSearch - needs competition selection');
       }
     } else {
       setShowResults(true); // No data, show empty message
@@ -305,8 +300,9 @@ function App() {
       setSelectedPlayerRecords(data); // Store all records for this player
       const comps = ['전체', ...new Set(data.map(record => record['대회명']).filter(Boolean))];
       setAvailableCompetitions(comps);
-      setNeedsSelection(false);
-      setShowResults(true);
+      setNeedsSelection(true); // Always show competition selection
+      setShowResults(false); // Hide results table initially
+      setSelectionMode('competition'); // Set selection mode to competition
       console.log('handlePlayerSelect - selectedPlayerRecords set:', data);
       console.log('handlePlayerSelect - availableCompetitions set:', comps);
     }
@@ -329,9 +325,10 @@ function App() {
       setSelectedPlayerRecords(data); // Store all records for this player
       const comps = ['전체', ...new Set(data.map(record => record['대회명']).filter(Boolean))];
       setAvailableCompetitions(comps);
-      setNeedsSelection(false);
-      setShowResults(true);
+      setNeedsSelection(true); // Always show competition selection
+      setShowResults(false); // Hide results table initially
       setIsTeamSearchMode(false); // Exit team search mode
+      setUniquePlayers([]); // Clear unique players list
       console.log('handlePlayerSelectFromTeam - selectedPlayerRecords set:', data);
       console.log('handlePlayerSelectFromTeam - availableCompetitions set:', comps);
     }
@@ -367,7 +364,7 @@ function App() {
             </form>
           </div>
           <div className="selection-container">
-            <h2>대회 선택</h2>
+            <h2>{selectionMode === 'player' ? '선수 선택' : '대회 선택'}</h2>
             <div className="competition-buttons-container">
               {availableCompetitions.map((comp) => (
                 <button
