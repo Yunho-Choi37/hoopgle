@@ -449,7 +449,9 @@ function App() {
                     {displayRecords.map((record, index) => (
                       <div key={index} className="player-card">
                         <div className="card-header">
-                          {record['대회명']} - {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> (<span className="team-name-mobile">{record['소속팀']}</span>) {record['vs 상대팀']}
+                          {record['대회명']} {record['vs 상대팀']}
+                          <br />
+                          {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> <span className="team-name-mobile">{record['소속팀'].replace('(', '').replace(')', '')}</span>
                         </div>
                         <div className="card-body">
                           {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
