@@ -134,6 +134,7 @@ function App() {
     setDisplayRecords([]);
     setSearchTerm('');
     setShowDetailPage(false); // Ensure detail page is hidden
+    setIsTeamSearchMode(false);
   };
 
   const handleGoToDetailPage = () => {
@@ -156,22 +157,23 @@ function App() {
   };
 
   const handleGoBack = () => {
+    // Case 1: From final results table back to selection screen
     if (showResults) {
-      // Currently showing player records
-      if (isTeamSearchMode) {
-        // If we came from a team search selection, go back to selection
-        setShowResults(false);
-        setNeedsSelection(true);
-        // searchTerm should remain to show the team search context
-      } else {
-        // Otherwise, go back to initial search
-        handleGoHome(); // This resets everything to initial search state
-      }
-    } else if (needsSelection) {
-      // Currently showing player selection
-      handleGoHome(); // Go back to initial search state
+      setShowResults(false);
+      setNeedsSelection(true);
+      return;
     }
-    // No back action if on showDetailPage or initial search
+    
+    // Case 2: From selection screen
+    if (needsSelection) {
+      // If it was a team search, going back from competition selection should show the player list again.
+      if (isTeamSearchMode && selectionMode === 'competition') {
+        setSelectionMode('player');
+      } else {
+        // Otherwise, go to the home page.
+        handleGoHome();
+      }
+    }
   };
 
   const handleSearch = async (event) => {
@@ -257,6 +259,7 @@ function App() {
         // Multiple players with the same name or same player in different teams
         setUniquePlayers(uniquePlayerTeamCombinations.map(group => group[0])); // Show first record of each group for selection
         setNeedsSelection(true);
+        setSelectionMode('player');
         // Extract competitions from searchResults for selection screen
         const comps = ['전체', ...new Set(searchResults.map(record => record['대회명']).filter(Boolean))];
         setAvailableCompetitions(comps);
@@ -327,192 +330,180 @@ function App() {
       setAvailableCompetitions(comps);
       setNeedsSelection(true); // Always show competition selection
       setShowResults(false); // Hide results table initially
-      setIsTeamSearchMode(false); // Exit team search mode
-      setUniquePlayers([]); // Clear unique players list
+      setSelectionMode('competition'); // Set selection mode to competition
+      // isTeamSearchMode is already true, so we don't need to set it again.
       console.log('handlePlayerSelectFromTeam - selectedPlayerRecords set:', data);
       console.log('handlePlayerSelectFromTeam - availableCompetitions set:', comps);
     }
   };
 
+  // Helper to render the header
+  const renderHeader = () => (
+    <div className="results-header">
+      <button className="back-button" onClick={handleGoBack}>
+        &lt;
+      </button>
+      <h1 className="logo-small" onClick={handleGoHome}>
+        <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+      </h1>
+      <form onSubmit={handleSearch} className="search-form-results">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <button type="submit">검색</button>
+        <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">Hoop Zone</button>
+      </form>
+    </div>
+  );
+
+  // Main render logic
   return (
     <div className="App">
-      {showDetailPage ? (
-        <div className="detail-page-container">
-          <h2>상세 페이지</h2>
-          <p>여기에 상세 내용을 추가할 예정입니다.</p>
-          <button onClick={handleGoBackFromDetail}>뒤로 가기</button>
-        </div>
-      ) : needsSelection ? (
-        <div className="results-container">
-          <div className="results-header">
-            {(showResults || needsSelection) && (
-              <button className="back-button" onClick={handleGoBack}>
-                &lt;
-              </button>
-            )}
-            <h1 className="logo-small" onClick={handleGoHome}>
-              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">g</span><span className="hoopgle-yellow">l</span><span className="hoopgle-navy">e</span>
-            </h1>
-            <form onSubmit={handleSearch} className="search-form-results">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button type="submit">검색</button>
-              <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">I'm Hooping</button>
-            </form>
-          </div>
-          <div className="selection-container">
-            <h2>{selectionMode === 'player' ? '선수 선택' : '대회 선택'}</h2>
-            <div className="competition-buttons-container">
-              {availableCompetitions.map((comp) => (
-                <button
-                  key={comp}
-                  className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
-                  onClick={() => {
-                    console.log('Competition button clicked:', comp);
-                    setSelectedCompetition(comp);
-                    setShowResults(true);
-                    setNeedsSelection(false);
-                  }}
-                >
-                  {comp}
-                </button>
-              ))}
+      {(() => {
+        if (showDetailPage) {
+          return (
+            <div className="detail-page-container">
+              <h2>상세 페이지</h2>
+              <p>여기에 상세 내용을 추가할 예정입니다.</p>
+              <button onClick={handleGoBackFromDetail}>뒤로 가기</button>
             </div>
-            <ul className="selection-list">
-              {isTeamSearchMode ? (
-                // Render for team search results (list of unique player objects)
-                uniquePlayers.map(player => (
-                  <li 
-                    key={`${player['선수명']}_${player['등번호']}_${player['소속팀']}`}
-                    onClick={() => handlePlayerSelectFromTeam(player['선수명'], player['소속팀'])}
-                  >
-                    <span className="player-name">{player['선수명']}</span>
-                    <span className="team-name">({player['소속팀']})</span>
-                  </li>
-                ))
-              ) : (
-                // Render for player search results (list of arrays of records)
-                uniquePlayers.map(player => (
-                  <li 
-                    key={`${player['선수명']}_${player['소속팀']}`}
-                    onClick={() => handlePlayerSelect(player)}
-                  >
-                    <span className="player-name">{player['선수명']}</span>
-                    <span className="team-name">({player['소속팀']})</span>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </div>
-      ) : !showResults ? (
-        <div className="search-container">
-          <h1 className="logo">
-            <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">g</span><span className="hoopgle-yellow">l</span><span className="hoopgle-navy">e</span>
-          </h1>
-          <form onSubmit={handleSearch} className="search-form">
-            <div className="search-bar">
-              <input
-                type="text"
-                placeholder="선수 이름 또는 학교 이름으로 검색"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="buttons">
-              <button type="submit">검색</button>
-              <button type="button" onClick={handleGoToDetailPage}>I'm Hooping</button> {/* New button */}
-            </div>
-          </form>
+          );
+        }
 
-          <div className="data-source-container">
-            <span className="data-source-wrapper">
-              Data Source : 
-              <a href="http://www.kssbf.or.kr/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
-                KSSBF
-              </a>
-              <a href="https://www.koreabasketball.or.kr/main/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
-                KBA
-              </a>
-            </span>
-          </div>
-
-        </div>
-      ) : (
-        <div className="results-container">
-          <div className="results-header">
-            {(showResults || needsSelection) && (
-              <button className="back-button" onClick={handleGoBack}>
-                &lt;
-              </button>
-            )}
-            <h1 className="logo-small" onClick={handleGoHome}>
-              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">g</span><span className="hoopgle-yellow">l</span><span className="hoopgle-navy">e</span>
-            </h1>
-            <form onSubmit={handleSearch} className="search-form-results">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button type="submit">검색</button>
-              <button type="button" onClick={handleGoToDetailPage} className="hide-on-mobile-results">I'm Hooping</button>
-            </form>
-          </div>
-          {displayRecords.length > 0 ? (
-            <>
-              
-              {/* Desktop Table */}
-              <table className="desktop-table">
-                <thead>
-                  <tr>
-                    {DISPLAY_COLUMNS.map(colKey => (
-                      <th key={colKey} className={colKey === '선수명' ? 'name-column' : ''}>
-                        {COLUMN_MAPPING[colKey]}
-                      </th>
+        if (needsSelection) {
+          return (
+            <div className="results-container">
+              {renderHeader()}
+              <div className="selection-container">
+                <h2>{selectionMode === 'player' ? '선수 선택' : '대회 선택'}</h2>
+                
+                {selectionMode === 'competition' && (
+                  <div className="competition-buttons-container">
+                    {availableCompetitions.map((comp) => (
+                      <button
+                        key={comp}
+                        className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
+                        onClick={() => {
+                          setSelectedCompetition(comp);
+                          setShowResults(true);
+                          setNeedsSelection(false);
+                        }}
+                      >
+                        {comp}
+                      </button>
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayRecords.map((record) => (
-                    <tr key={record.id}>
-                      {DISPLAY_COLUMNS.map(colKey => (
-                        <td key={`${record.id}-${colKey}`} className={colKey === '선수명' ? 'name-column' : ''}>
-                          {record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Mobile Card View */}
-              <div className="cards-container">
-                {displayRecords.map((record, index) => (
-                  <div key={index} className="player-card">
-                    <div className="card-header">
-                      {record['대회명']} - {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> (<span className="team-name-mobile">{record['소속팀']}</span>) {record['vs 상대팀']}
-                    </div>
-                    <div className="card-body">
-                      {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
-                        <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '어시스트'].includes(colKey) ? 'highlight-yellow' : ''}`}>
-                          <span className="label">{COLUMN_MAPPING[colKey]}</span>
-                          <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
-                        </div>
-                      ))}
-                    </div>
                   </div>
-                ))}
+                )}
+
+                {selectionMode === 'player' && (
+                  <ul className="selection-list">
+                    {uniquePlayers.map(player => (
+                      <li 
+                        key={`${player['선수명']}_${player['등번호']}_${player['소속팀']}`}
+                        onClick={() => isTeamSearchMode 
+                          ? handlePlayerSelectFromTeam(player['선수명'], player['소속팀']) 
+                          : handlePlayerSelect(player)}
+                      >
+                        <span className="player-name">{player['선수명']}</span>
+                        <span className="team-name">({player['소속팀']})</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </>
-          ) : (
-            <p>검색 결과가 없습니다.</p>
-          )}
-        </div>
-      )}
+            </div>
+          );
+        }
+
+        if (showResults) {
+          return (
+            <div className="results-container">
+              {renderHeader()}
+              {displayRecords.length > 0 ? (
+                <>
+                  <table className="desktop-table">
+                    <thead>
+                      <tr>
+                        {DISPLAY_COLUMNS.map(colKey => (
+                          <th key={colKey} className={colKey === '선수명' ? 'name-column' : ''}>
+                            {COLUMN_MAPPING[colKey]}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {displayRecords.map((record) => (
+                        <tr key={record.id}>
+                          {DISPLAY_COLUMNS.map(colKey => (
+                            <td key={`${record.id}-${colKey}`} className={colKey === '선수명' ? 'name-column' : ''}>
+                              {record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="cards-container">
+                    {displayRecords.map((record, index) => (
+                      <div key={index} className="player-card">
+                        <div className="card-header">
+                          {record['대회명']} - {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> (<span className="team-name-mobile">{record['소속팀']}</span>) {record['vs 상대팀']}
+                        </div>
+                        <div className="card-body">
+                          {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
+                            <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '어시스트'].includes(colKey) ? 'highlight-yellow' : ''}`}>
+                              <span className="label">{COLUMN_MAPPING[colKey]}</span>
+                              <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p>검색 결과가 없습니다.</p>
+              )}
+            </div>
+          );
+        }
+
+        // Default case: Home page
+        return (
+          <div className="search-container">
+            <h1 className="logo">
+              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+            </h1>
+            <form onSubmit={handleSearch} className="search-form">
+              <div className="search-bar">
+                <input
+                  type="text"
+                  placeholder="선수명 또는 팀명으로 검색"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="buttons">
+                <button type="submit">검색</button>
+                <button type="button" onClick={handleGoToDetailPage}>Hoop Zone</button>
+              </div>
+            </form>
+            <div className="data-source-container">
+              <span className="data-source-wrapper">
+                Data Source : 
+                <a href="http://www.kssbf.or.kr/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
+                  KSSBF
+                </a>
+                <a href="https://www.koreabasketball.or.kr/main/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
+                  KBA
+                </a>
+              </span>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -85,9 +85,9 @@
   border: none;
   border-radius: 50%;
   color: white;
-  font-size: 18px;
-  width: 30px;
-  height: 30px;
+  font-size: 16px; /* 아이콘 크기 줄임 */
+  width: 28px; /* 버튼 크기 줄임 */
+  height: 28px; /* 버튼 크기 줄임 */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -98,9 +98,10 @@
 }
 
 .logo-small {
-  font-size: 20px;
+  font-size: 24px; /* 로고 크기 조정 */
   font-weight: bold;
   cursor: pointer;
+  line-height: 1.5; /* 검색창과 수직 정렬을 위해 추가 */
 }
 
 .selection-container {
@@ -372,7 +373,7 @@ tbody tr:hover {
 }
 
 .data-source-container {
-  margin-top: 20vh; /* 화면 하단에 가깝게 배치 */
+  margin-top: 35vh; /* 화면 하단에 가깝게 배치 */
   font-size: 14px;
   color: #5f6368;
   display: flex;
