@@ -481,7 +481,14 @@ function App() {
     const rankedPlayers = {};
 
     sortKeys.forEach(key => {
-      const sorted = [...players].sort((a, b) => b[key] - a[key]);
+      const sorted = [...players].sort((a, b) => {
+        // Primary sort by the current key (e.g., totalAssists)
+        if (b[key] !== a[key]) {
+          return b[key] - a[key];
+        }
+        // Secondary sort by totalPoints if primary key is equal
+        return b.totalPoints - a.totalPoints;
+      });
       sorted.forEach((player, index) => {
         if (!rankedPlayers[player.name + player.team + player.jersey]) {
           rankedPlayers[player.name + player.team + player.jersey] = { ...player };
@@ -820,27 +827,43 @@ function App() {
         }
 
         if (needsSelection) {
+          const playerInfo = selectedPlayerRecords.length > 0 ? selectedPlayerRecords[0] : null;
           return (
             <div className="results-container">
               {renderHeader()}
               <div className="selection-container">
-                <h2>{selectionMode === 'player' ? '선수 선택' : '대회 선택'}</h2>
+                {selectionMode === 'player' && (
+                  <h2>선수 선택</h2>
+                )}
                 
+                {selectionMode === 'competition' && playerInfo && (
+                  <div className="player-profile-box">
+                    <div className="player-profile-summary">
+                      <h3>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span></h3>
+                      <p className="team-name">{playerInfo['소속팀']}</p>
+                      <p>키: (정보 없음) | 포지션: (정보 없음)</p>
+                    </div>
+                  </div>
+                )}
+
                 {selectionMode === 'competition' && (
-                  <div className="competition-buttons-container">
-                    {availableCompetitions.map((comp) => (
-                      <button
-                        key={comp}
-                        className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedCompetition(comp);
-                          setShowResults(true);
-                          setNeedsSelection(false);
-                        }}
-                      >
-                        {comp}
-                      </button>
-                    ))}
+                  <div className="competition-selection-box">
+                    <h2>대회 선택</h2>
+                    <div className="competition-buttons-container">
+                      {availableCompetitions.map((comp) => (
+                        <button
+                          key={comp}
+                          className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
+                          onClick={() => {
+                            setSelectedCompetition(comp);
+                            setShowResults(true);
+                            setNeedsSelection(false);
+                          }}
+                        >
+                          {comp}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
@@ -865,58 +888,94 @@ function App() {
         }
 
         if (showResults) {
-          return (
-            <div className="results-container">
-              {renderHeader()}
-              {displayRecords.length > 0 ? (
-                <>
-                  <table className="desktop-table">
-                    <thead>
-                      <tr>
-                        {DISPLAY_COLUMNS.map(colKey => (
-                          <th key={colKey} className={colKey === '선수명' ? 'name-column' : ''}>
-                            {COLUMN_MAPPING[colKey]}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {displayRecords.map((record) => (
-                        <tr key={record.id}>
-                          {DISPLAY_COLUMNS.map(colKey => (
-                            <td key={`${record.id}-${colKey}`} className={colKey === '선수명' ? 'name-column' : ''}>
-                              {colKey === '상대팀' ? (record[colKey] !== undefined && record[colKey] !== null && record[colKey] !== '' ? `vs ${record[colKey]}` : '') : (record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0)}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className="cards-container">
-                    {displayRecords.map((record) => (
-                      <div key={record.id} className="player-card">
-                        <div className="card-header">
-                          {record['대회명']} {record['상대팀'] !== undefined && record['상대팀'] !== null && record['상대팀'] !== '' ? `vs ${record['상대팀']}` : ''}
-                          <br />
-                          {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> <span className="team-name-mobile">{record['소속팀'].replace('(', '').replace(')', '')}</span>
-                        </div>
-                        <div className="card-body">
-                          {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', '상대팀', '등번호'].includes(col)).map(colKey => (
-                            <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '자유투 성공률(%)', '총 리바운드', '어시스트', '블록슛', '턴오버'].includes(colKey) ? 'highlight-yellow' : ''}`}>
-                              <span className="label">{COLUMN_MAPPING[colKey]}</span>
-                              <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+          // Check if a specific player's records are loaded (i.e., we are in player profile view)
+          if (selectedPlayerRecords.length > 0) {
+            // Get player info from the first record (assuming all records are for the same player)
+            const playerInfo = selectedPlayerRecords[0];
+            return (
+              <div className="results-container">
+                {renderHeader()}
+                <div className="player-profile-container">
+                  <h2>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span></h2>
+                  <p className="team-name">{playerInfo['소속팀']}</p>
+                  {/* Placeholder for Height and Position */}
+                  <p>키: (정보 없음) | 포지션: (정보 없음)</p>
+
+                  {/* Competition selection buttons */}
+                  <div className="competition-buttons-container">
+                    {availableCompetitions.map((comp) => (
+                      <button
+                        key={comp}
+                        className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
+                        onClick={() => setSelectedCompetition(comp)}
+                      >
+                        {comp}
+                      </button>
                     ))}
                   </div>
-                </>
-              ) : (
+
+                  {/* Display records based on selected competition */}
+                  {displayRecords.length > 0 ? (
+                    <>
+                      <table className="desktop-table">
+                        <thead>
+                          <tr>
+                            {DISPLAY_COLUMNS.map(colKey => (
+                              <th key={colKey} className={colKey === '선수명' ? 'name-column' : ''}>
+                                {COLUMN_MAPPING[colKey]}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {displayRecords.map((record) => (
+                            <tr key={record.id}>
+                              {DISPLAY_COLUMNS.map(colKey => (
+                                <td key={`${record.id}-${colKey}`} className={colKey === '선수명' ? 'name-column' : ''}>
+                                  {colKey === '상대팀' ? (record[colKey] !== undefined && record[colKey] !== null && record[colKey] !== '' ? `vs ${record[colKey]}` : '') : (record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0)}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="cards-container">
+                        {displayRecords.map((record) => (
+                          <div key={record.id} className="player-card">
+                            <div className="card-header">
+                              {record['대회명']} {record['상대팀'] !== undefined && record['상대팀'] !== null && record['상대팀'] !== '' ? `vs ${record['상대팀']}` : ''}
+                              <br />
+                              {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> <span className="team-name-mobile">{record['소속팀'].replace('(', '').replace(')', '')}</span>
+                            </div>
+                            <div className="card-body">
+                              {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', '상대팀', '등번호'].includes(col)).map(colKey => (
+                                <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '자유투 성공률(%)', '총 리바운드', '어시스트', '블록슛', '턴오버'].includes(colKey) ? 'highlight-yellow' : ''}`}>
+                                  <span className="label">{COLUMN_MAPPING[colKey]}</span>
+                                  <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <p>선택된 대회에 대한 기록이 없습니다.</p>
+                  )}
+                </div>
+              </div>
+            );
+          } else {
+            // This else block handles cases where showResults is true but no specific player records are loaded,
+            // which might happen if the search yielded no results or multiple players were found but none selected yet.
+            // I will keep the "검색 결과가 없습니다." message here for now.
+            return (
+              <div className="results-container">
+                {renderHeader()}
                 <p>검색 결과가 없습니다.</p>
-              )}
-            </div>
-          );
+              </div>
+            );
+          }
         }
 
         if (showRankingsPage) {
