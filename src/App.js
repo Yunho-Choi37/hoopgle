@@ -231,7 +231,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const COLUMN_MAPPING = {
   '대회명': 'Competition',
   '소속팀': 'Team',
-  'vs 상대팀': 'vs',
+  '상대팀': 'vs',
   '선수명': 'name',
   '등번호': 'no.',
   '1Q 득점': '1QP',
@@ -264,7 +264,7 @@ const COLUMN_MAPPING = {
 
 // 표시할 컬럼 순서 (원본 컬럼명 사용)
 const DISPLAY_COLUMNS = [
-  '대회명', '소속팀', 'vs 상대팀', '선수명', '등번호', '1Q 득점', '2Q 득점', '3Q 득점', '4Q 득점', '연장 득점', '총득점',
+  '대회명', '소속팀', '상대팀', '선수명', '등번호', '1Q 득점', '2Q 득점', '3Q 득점', '4Q 득점', '연장 득점', '총득점',
   '플레잉 타임', '2점슛 성공', '2점슛 시도', '2점 성공률(%)', '3점슛 성공', '3점슛 시도',
   '3점 성공률(%)', '필드골 성공률(%)', '자유투 성공', '자유투 시도', '자유투 성공률(%)',
   '공격 리바운드', '수비 리바운드', '총 리바운드', '어시스트', '스틸', '굿디펜스', '블록슛',
@@ -274,8 +274,8 @@ const DISPLAY_COLUMNS = [
 // 레코드 처리 헬퍼 함수
 const processRecords = (records) => {
   if (records && records.length > 0) {
-    // console.log("First record from Supabase (before processing):");
-    // console.log(JSON.stringify(records[0], null, 2));
+    console.log("processRecords - first record (before processing):");
+    console.log(JSON.stringify(records[0], null, 2));
   }
   return records.map(p => {
     const q1 = parseInt(p['1Q 득점']) || 0;
@@ -651,6 +651,7 @@ function App() {
       console.error('Error searching teams:', teamError);
       searchError = teamError;
     } else if (teamData && teamData.length > 0) {
+      console.log('handleSearch - teamData (first record):', teamData[0]); // Add log
       // If team found, display unique players from that team
       const uniquePlayersInTeam = Array.from(new Set(teamData.map(p => `${p['선수명']}_${p['등번호']}_${p['소속팀']}`))) // Include team in key
         .map(key => {
@@ -678,6 +679,9 @@ function App() {
       searchError = playerError;
     } else {
       searchResults = playerData;
+      if (searchResults && searchResults.length > 0) {
+        console.log('handleSearch - searchResults (first record):', searchResults[0]); // Add log
+      }
     }
 
     if (searchError) {
@@ -881,7 +885,7 @@ function App() {
                         <tr key={record.id}>
                           {DISPLAY_COLUMNS.map(colKey => (
                             <td key={`${record.id}-${colKey}`} className={colKey === '선수명' ? 'name-column' : ''}>
-                              {record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}
+                              {colKey === '상대팀' ? (record[colKey] !== undefined && record[colKey] !== null && record[colKey] !== '' ? `vs ${record[colKey]}` : '') : (record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0)}
                             </td>
                           ))}
                         </tr>
@@ -889,16 +893,16 @@ function App() {
                     </tbody>
                   </table>
                   <div className="cards-container">
-                    {displayRecords.map((record, index) => (
-                      <div key={index} className="player-card">
+                    {displayRecords.map((record) => (
+                      <div key={record.id} className="player-card">
                         <div className="card-header">
-                          {record['대회명']} {record['vs 상대팀']}
+                          {record['대회명']} {record['상대팀'] !== undefined && record['상대팀'] !== null && record['상대팀'] !== '' ? `vs ${record['상대팀']}` : ''}
                           <br />
                           {record['선수명']} <span className="jersey-number">no.{record['등번호']}</span> <span className="team-name-mobile">{record['소속팀'].replace('(', '').replace(')', '')}</span>
                         </div>
                         <div className="card-body">
-                          {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', 'vs 상대팀', '등번호'].includes(col)).map(colKey => (
-                            <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '어시스트'].includes(colKey) ? 'highlight-yellow' : ''}`}>
+                          {DISPLAY_COLUMNS.filter(col => !['대회명', '선수명', '소속팀', '상대팀', '등번호'].includes(col)).map(colKey => (
+                            <div key={`${record.id}-${colKey}`} className={`card-item ${['총득점', '2점 성공률(%)', '3점 성공률(%)', '필드골 성공률(%)', '자유투 성공률(%)', '총 리바운드', '어시스트', '블록슛', '턴오버'].includes(colKey) ? 'highlight-yellow' : ''}`}>
                               <span className="label">{COLUMN_MAPPING[colKey]}</span>
                               <span className="value">{record[colKey] !== undefined && record[colKey] !== null ? record[colKey] : 0}</span>
                             </div>
