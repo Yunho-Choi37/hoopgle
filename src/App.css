@@ -107,7 +107,7 @@
 
 .selection-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 900px; /* 600px에서 900px로 증가 */
   text-align: center;
 }
 
@@ -172,7 +172,7 @@ table {
 .competition-select-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 38px; /* 간격 20px에서 38px로 증가 (약 1cm) */
   margin-top: 20px;
   justify-content: center;
 }
@@ -185,6 +185,7 @@ table {
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s ease-in-out;
+  flex-shrink: 0; /* 버튼이 줄어들지 않도록 설정 */
 }
 
 .competition-button:hover {
@@ -297,7 +298,7 @@ tbody tr:hover {
 
 .card-item.highlight-yellow .label,
 .card-item.highlight-yellow .value {
-  color: #B22222; /* Hoopgle 빨간색으로 변경하여 가시성 확보 */
+  color: #FDB813; /* Hoopgle 노란색으로 변경 */
 }
 
 /* Responsive: Hide table on small screens */
