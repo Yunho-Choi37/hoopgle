@@ -3,7 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import './App.css';
 
 // RankingsPage Component Definition
-const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) => {
+const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, isLoading }) => {
+  console.log('RankingsPage: isLoading', isLoading); // Debugging loading state
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
   const [middleSchoolSubTab, setMiddleSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
@@ -11,17 +12,9 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
 
   const getSortedRankings = (rankings) => {
-    let sorted = [...rankings];
-    if (rankingType === 'totalPoints') {
-      sorted.sort((a, b) => b.totalPoints - a.totalPoints);
-    } else if (rankingType === 'totalAssists') {
-      sorted.sort((a, b) => b.totalAssists - a.totalAssists);
-    } else if (rankingType === 'totalRebounds') {
-      sorted.sort((a, b) => b.totalRebounds - a.totalRebounds);
-    } else if (rankingType === 'totalBlocks') {
-      sorted.sort((a, b) => b.totalBlocks - a.totalBlocks);
-    }
-    return sorted;
+    // Rankings are already sorted and ranked by calculateRankingsBySchoolType
+    // We just need to return them as is for filtering
+    return rankings;
   };
 
   const renderRankingList = (rankings) => {
@@ -33,6 +26,10 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
         player.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .slice(0, 50); // Limit to top 50 players
+
+    if (isLoading) {
+      return <p className="loading-message">잠시만 기다려주세요...</p>;
+    }
 
     if (filteredRankings.length === 0) {
       return <p className="no-results-message">검색 결과가 없습니다.</p>;
@@ -90,7 +87,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
     );
   };
 
-  let currentRankings = [];
+  let currentRankings;
   if (activeTab === 'middleSchool') {
     if (middleSchoolSubTab === 'all') {
       currentRankings = middleSchoolRankings.all;
@@ -308,6 +305,7 @@ function App() {
   const [showRankingsPage, setShowRankingsPage] = useState(false); // New state for rankings page
   const [middleSchoolRankings, setMiddleSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store middle school rankings
   const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [] }); // State to store high school rankings
+  const [isLoadingRankings, setIsLoadingRankings] = useState(true); // New state for loading rankings
 
   // Helper function to calculate total points rankings, separated by school type
   const calculateRankingsBySchoolType = (records) => {
@@ -506,6 +504,7 @@ function App() {
   // Fetch rankings on component mount
   useEffect(() => {
     const fetchRankings = async () => {
+      setIsLoadingRankings(true); // Start loading
       let allRecords = [];
       let page = 0;
       const pageSize = 1000; // Supabase API limit per request
@@ -549,6 +548,7 @@ function App() {
       const { middleSchool, highSchool } = calculateRankingsBySchoolType(processedAllRecords);
       setMiddleSchoolRankings(middleSchool);
       setHighSchoolRankings(highSchool);
+      setIsLoadingRankings(false); // End loading
 
       const uniqueCompetitions = ['전체', ...new Set(allRecords.map(record => record['대회명']).filter(Boolean))];
       // setCompetitions(uniqueCompetitions);
@@ -921,6 +921,7 @@ function App() {
               middleSchoolRankings={middleSchoolRankings} 
               highSchoolRankings={highSchoolRankings} 
               onGoHome={handleGoHome} 
+              isLoading={isLoadingRankings}
             />
           );
         }

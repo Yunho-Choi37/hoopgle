@@ -172,7 +172,7 @@ table {
 .competition-select-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px; /* 간격 15px에서 20px로 증가 */
   margin-top: 20px;
   justify-content: center;
 }
