@@ -102,6 +102,7 @@
   font-weight: bold;
   cursor: pointer;
   line-height: 1.5; /* 검색창과 수직 정렬을 위해 추가 */
+  margin-right: auto; /* Push other elements to the right */
 }
 
 .selection-container {
@@ -169,28 +170,31 @@ table {
 }
 
 .competition-select-container {
-  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+  justify-content: center;
 }
 
-.competition-select {
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid #dfe1e5;
-  font-size: 16px;
-  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 584px;
-}
-
-.competition-select-results {
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid #dfe1e5;
+.competition-button {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 8px 15px;
+  cursor: pointer;
   font-size: 14px;
-  box-sizing: border-box;
-  flex-grow: 1;
-  min-width: 120px; /* Adjust as needed */
+  transition: background-color 0.2s ease-in-out;
+}
+
+.competition-button:hover {
+  background-color: #e0e0e0;
+}
+
+.competition-button.active {
+  background-color: #4285F4;
+  color: white;
+  border-color: #4285F4;
 }
 
 thead {
@@ -226,57 +230,12 @@ tbody tr:hover {
   text-align: left;
 }
 
-.ranking-container {
-  margin-top: 40px;
-  width: 100%;
-  max-width: 584px;
-  text-align: center;
-}
-
-.ranking-container h3 {
-  color: #3c4043;
-  margin-bottom: 15px;
-}
-
-.ranking-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  box-shadow: 0 1px 6px rgba(32,33,36,0.28);
-  border-radius: 8px;
-  overflow: hidden; /* Ensures rounded corners apply to children */
-}
-
-.ranking-table th,
-.ranking-table td {
-  padding: 10px 5px;
-  border-bottom: 1px solid #e8eaed;
-  text-align: center;
-  font-size: 13px;
-}
-
-.ranking-table thead {
-  background-color: #f8f9fa;
-  color: #5f6368;
-}
-
-.ranking-table th {
-  font-weight: normal;
-}
-
-.ranking-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.ranking-table tbody tr:hover {
-  background-color: #f0f0f0;
-}
-
 /* Card View for Mobile */
 .cards-container {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  margin-top: 20px; /* Add space from the header/tabs */
 }
 
 .player-card {
@@ -338,7 +297,7 @@ tbody tr:hover {
 
 .card-item.highlight-yellow .label,
 .card-item.highlight-yellow .value {
-  color: #FDB813; /* Hoopgle 노란색 */
+  color: #B22222; /* Hoopgle 빨간색으로 변경하여 가시성 확보 */
 }
 
 /* Responsive: Hide table on small screens */
@@ -404,37 +363,197 @@ tbody tr:hover {
   background-color: transparent;
 }
 
-/* Responsive: Hide cards on large screens */
+/* Responsive: Hide cards on large screens (for search results page) */
 @media (min-width: 769px) {
-  .cards-container {
+  .results-container .cards-container { 
     display: none;
   }
 }
 
-.competition-buttons-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
-  justify-content: center;
+/* --- Rankings Page Specific Styles --- */
+.rankings-container {
+  width: 100%;
+  max-width: 800px; /* 너비 확장 */
+  padding: 20px;
 }
 
-.competition-button {
-  background-color: #f0f0f0;
+.home-button-rankings {
+  background-color: #f8f9fa;
+  border: 1px solid #f8f9fa;
+  border-radius: 4px;
+  color: #3c4043;
+  font-size: 14px;
+  padding: 0 16px;
+  height: 36px;
+  cursor: pointer;
+}
+
+.ranking-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  border: 2px solid #4285F4; /* 파란색 테두리 */
+  border-radius: 8px; /* 둥근 모서리 */
+  overflow: hidden; /* 내부 요소가 테두리를 넘지 않도록 */
+}
+
+.tab-button {
+  flex-grow: 1; /* 버튼이 동일한 너비를 갖도록 */
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  background-color: #fff;
+  color: #4285F4;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.tab-button:not(:last-child) {
+  border-right: 2px solid #4285F4; /* 버튼 사이의 구분선 */
+}
+
+.tab-button.active {
+  background-color: #4285F4; /* 활성 탭 배경색 */
+  color: #fff; /* 활성 탭 글자색 */
+}
+
+.ranking-card {
+  border-left: 5px solid #4285F4; /* 왼쪽에 파란색 강조선 */
+}
+
+.ranking-number {
+  font-size: 1.4em;
+  font-weight: bold;
+  color: #4285F4;
+  margin-right: 15px;
+}
+
+.ranking-card .card-header {
+  display: flex;
+  align-items: center;
+}
+
+.ranking-card .card-body .label {
+  color: #5f6368;
+  font-size: 0.9em;
+}
+
+.ranking-card .card-body .value {
+  color: #202124;
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+/* Sub-tabs for Middle School (All, Male, Female) */
+.ranking-sub-tabs {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 20px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  overflow: hidden;
+}
+
+.sub-tab-button {
+  flex-grow: 1;
   padding: 8px 15px;
-  cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s ease-in-out;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.competition-button:hover {
-  background-color: #e0e0e0;
+.sub-tab-button:not(:last-child) {
+  border-right: 1px solid #ccc;
 }
 
-.competition-button.active {
+.sub-tab-button.active {
   background-color: #4285F4;
-  color: white;
-  border-color: #4285F4;
+  color: #fff;
+}
+
+/* Tabs for Ranking Type (Points, Assists, Rebounds, Blocks) */
+.ranking-type-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.type-tab-button {
+  flex-grow: 1;
+  padding: 8px 15px;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.type-tab-button:not(:last-child) {
+  border-right: 1px solid #ccc;
+}
+
+.type-tab-button.active {
+  background-color: #4285F4;
+  color: #fff;
+}
+
+/* High School Sub-tabs (similar to middle school sub-tabs) */
+.highschool-sub-tabs {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.highschool-sub-tab-button {
+  flex-grow: 1;
+  padding: 8px 15px;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  color: #333;
+  border: none;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.highschool-sub-tab-button:not(:last-child) {
+  border-right: 1px solid #ccc;
+}
+
+.highschool-sub-tab-button.active {
+  background-color: #4285F4;
+  color: #fff;
+}
+
+/* Ranking Search Bar */
+.ranking-search-bar {
+  width: 100%;
+  max-width: 400px; /* Adjust as needed */
+  margin: 20px auto; /* Center the search bar */
+}
+
+.ranking-search-bar input {
+  width: 100%;
+  padding: 10px 15px;
+  border-radius: 20px;
+  border: 1px solid #dfe1e5;
+  font-size: 16px;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.1);
+  box-sizing: border-box;
 }
