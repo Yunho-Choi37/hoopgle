@@ -7,7 +7,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
   const [middleSchoolSubTab, setMiddleSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
-  const [rankingType, setRankingType] = useState('totalPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'
+  const [rankingType, setRankingType] = useState('totalPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
 
   const getSortedRankings = (rankings) => {
@@ -20,6 +20,12 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
       sorted.sort((a, b) => b.totalRebounds - a.totalRebounds);
     } else if (rankingType === 'totalBlocks') {
       sorted.sort((a, b) => b.totalBlocks - a.totalBlocks);
+    } else if (rankingType === 'avgPoints') {
+      sorted.sort((a, b) => b.avgPoints - a.avgPoints);
+    } else if (rankingType === 'avgAssists') {
+      sorted.sort((a, b) => b.avgAssists - a.avgAssists);
+    } else if (rankingType === 'avgRebounds') {
+      sorted.sort((a, b) => b.avgRebounds - a.avgRebounds);
     }
     return sorted;
   };
@@ -50,6 +56,14 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
             displayRank = player.originalRankTotalRebounds;
           } else if (rankingType === 'totalBlocks') {
             displayRank = player.originalRankTotalBlocks;
+          } else if (rankingType === 'avgPoints') {
+            displayRank = player.originalRankAvgPoints;
+          } else if (rankingType === 'avgAssists') {
+            displayRank = player.originalRankAvgAssists;
+          } else if (rankingType === 'avgRebounds') {
+            displayRank = player.originalRankAvgRebounds;
+          } else if (rankingType === 'avgRebounds') {
+            displayRank = player.originalRankAvgRebounds;
           }
 
           return (
@@ -60,21 +74,33 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
                 <span className="team-name-mobile">{player.team.replace('(', '').replace(')', '')}</span>
               </div>
               <div className="card-body">
-                <div className={`card-item ${rankingType === 'totalPoints' ? 'highlight-yellow' : ''}`}>
+                <div className={`card-item ${rankingType === 'totalPoints' || rankingType === 'avgPoints' ? 'highlight-yellow' : ''}`}>
                   <span className="label">총득점</span>
                   <span className="value">{player.totalPoints}</span>
                 </div>
-                <div className={`card-item ${rankingType === 'totalAssists' ? 'highlight-yellow' : ''}`}>
+                <div className={`card-item ${rankingType === 'totalAssists' || rankingType === 'avgAssists' ? 'highlight-yellow' : ''}`}>
                   <span className="label">총 어시스트</span>
                   <span className="value">{player.totalAssists}</span>
                 </div>
-                <div className={`card-item ${rankingType === 'totalRebounds' ? 'highlight-yellow' : ''}`}>
+                <div className={`card-item ${rankingType === 'totalRebounds' || rankingType === 'avgRebounds' ? 'highlight-yellow' : ''}`}>
                   <span className="label">총 리바운드</span>
                   <span className="value">{player.totalRebounds}</span>
                 </div>
                 <div className={`card-item ${rankingType === 'totalBlocks' ? 'highlight-yellow' : ''}`}>
                   <span className="label">총 블록슛</span>
                   <span className="value">{player.totalBlocks}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'avgPoints' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">평균 득점</span>
+                  <span className="value">{player.avgPoints}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'avgAssists' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">평균 어시스트</span>
+                  <span className="value">{player.avgAssists}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'avgRebounds' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">평균 리바운드</span>
+                  <span className="value">{player.avgRebounds}</span>
                 </div>
                 {Object.entries(player.competitions).map(([compName, points]) => (
                   <div key={compName} className="card-item">
@@ -204,6 +230,24 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
         >
           블록슛
         </button>
+        <button
+          className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
+        >
+          평균 득점
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'avgAssists' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgAssists'); setSearchTerm(''); }}
+        >
+          평균 어시스트
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'avgRebounds' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgRebounds'); setSearchTerm(''); }}
+        >
+          평균 리바운드
+        </button>
       </div>
 
       <div className="ranking-search-bar">
@@ -307,7 +351,7 @@ function App() {
   const [selectedPlayerRecords, setSelectedPlayerRecords] = useState([]); // Stores all records for a selected player/team, unfiltered by competition
   const [showRankingsPage, setShowRankingsPage] = useState(false); // New state for rankings page
   const [middleSchoolRankings, setMiddleSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store middle school rankings
-  const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [] }); // State to store high school rankings
+  const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store high school rankings
 
   // Helper function to calculate total points rankings, separated by school type
   const calculateRankingsBySchoolType = (records) => {
@@ -319,8 +363,8 @@ function App() {
     const femaleHighSchoolPlayerStats = {};
 
     // Specific schools to be categorized as female
-    const specificFemaleMiddleSchools = ['수원제일중학교', '연암중학교', '인천동수중학교', '전주기전중학교', '효성중학교'];
-    const specificFemaleHighSchools = ['법서고등학교', '분당경영고등학교'];
+    const specificFemaleMiddleSchools = ['수원제일중학교', '연암중학교', '인천동수중학교', '전주기전중학교', '효성중학교', '영광홍농중학교', '수피아여자중학교', '봉의중학교', '대전월평중학교'];
+    const specificFemaleHighSchools = ['법서고등학교', '분당경영고등학교', '법성고등학교'];
 
     records.forEach(record => {
       const playerName = record['선수명'];
@@ -328,12 +372,18 @@ function App() {
       const jerseyNumber = record['등번호'];
       const competitionName = record['대회명'];
 
+      // Check for essential identifying information
+      if (!playerName || !teamName || jerseyNumber === undefined || jerseyNumber === null) {
+        console.warn("Skipping record due to missing player identifying information:", record);
+        return; // Skip this record
+      }
+
       const gamePoints = parseInt(record['총득점']) || 0;
       const gameAssists = parseInt(record['어시스트']) || 0;
       const gameRebounds = parseInt(record['총 리바운드']) || 0;
       const gameBlocks = parseInt(record['블록슛']) || 0;
 
-      const key = `${playerName}_${teamName}_${jerseyNumber}`;
+      const key = `${playerName}_${teamName}`;
 
       const isMiddleSchool = teamName.includes('중학교') || teamName.endsWith('중');
       const isHighSchool = teamName.includes('고등학교') || teamName.endsWith('고');
@@ -355,8 +405,19 @@ function App() {
           totalAssists: 0,
           totalRebounds: 0,
           totalBlocks: 0,
+          gamesPlayed: 0, // Add gamesPlayed
           competitions: {}, // For points per competition
       });
+
+      // Debugging for Kim Jun-hwan (before aggregation)
+      if (playerName === '김준환' && teamName === '전주고등학교') {
+        console.log(`--- Processing record for ${playerName} (${teamName}) ---`);
+        console.log('Current record:', record);
+        console.log('Before aggregation (middleSchoolPlayerStats): ', JSON.parse(JSON.stringify(middleSchoolPlayerStats[key] || {})));
+        console.log('Before aggregation (maleMiddleSchoolPlayerStats): ', JSON.parse(JSON.stringify(maleMiddleSchoolPlayerStats[key] || {})));
+        console.log('Before aggregation (highSchoolPlayerStats): ', JSON.parse(JSON.stringify(highSchoolPlayerStats[key] || {})));
+        console.log('Before aggregation (maleHighSchoolPlayerStats): ', JSON.parse(JSON.stringify(maleHighSchoolPlayerStats[key] || {})));
+      }
 
       // Aggregate for general middle school
       if (isMiddleSchool) {
@@ -367,11 +428,9 @@ function App() {
           middleSchoolPlayerStats[key].totalAssists += gameAssists;
           middleSchoolPlayerStats[key].totalRebounds += gameRebounds;
           middleSchoolPlayerStats[key].totalBlocks += gameBlocks;
+          middleSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
           if (competitionName) {
-              if (!middleSchoolPlayerStats[key].competitions[competitionName]) {
-                  middleSchoolPlayerStats[key].competitions[competitionName] = 0;
-              }
-              middleSchoolPlayerStats[key].competitions[competitionName] += gamePoints;
+              middleSchoolPlayerStats[key].competitions[competitionName] = (middleSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
           }
       }
 
@@ -384,11 +443,9 @@ function App() {
           maleMiddleSchoolPlayerStats[key].totalAssists += gameAssists;
           maleMiddleSchoolPlayerStats[key].totalRebounds += gameRebounds;
           maleMiddleSchoolPlayerStats[key].totalBlocks += gameBlocks;
+          maleMiddleSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
           if (competitionName) {
-              if (!maleMiddleSchoolPlayerStats[key].competitions[competitionName]) {
-                  maleMiddleSchoolPlayerStats[key].competitions[competitionName] = 0;
-              }
-              maleMiddleSchoolPlayerStats[key].competitions[competitionName] += gamePoints;
+              maleMiddleSchoolPlayerStats[key].competitions[competitionName] = (maleMiddleSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
           }
       }
 
@@ -401,11 +458,9 @@ function App() {
           femaleMiddleSchoolPlayerStats[key].totalAssists += gameAssists;
           femaleMiddleSchoolPlayerStats[key].totalRebounds += gameRebounds;
           femaleMiddleSchoolPlayerStats[key].totalBlocks += gameBlocks;
+          femaleMiddleSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
           if (competitionName) {
-              if (!femaleMiddleSchoolPlayerStats[key].competitions[competitionName]) {
-                  femaleMiddleSchoolPlayerStats[key].competitions[competitionName] = 0;
-              }
-              femaleMiddleSchoolPlayerStats[key].competitions[competitionName] += gamePoints;
+              femaleMiddleSchoolPlayerStats[key].competitions[competitionName] = (femaleMiddleSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
           }
       }
 
@@ -418,11 +473,9 @@ function App() {
           highSchoolPlayerStats[key].totalAssists += gameAssists;
           highSchoolPlayerStats[key].totalRebounds += gameRebounds;
           highSchoolPlayerStats[key].totalBlocks += gameBlocks;
+          highSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
           if (competitionName) {
-              if (!highSchoolPlayerStats[key].competitions[competitionName]) {
-                  highSchoolPlayerStats[key].competitions[competitionName] = 0;
-              }
-              highSchoolPlayerStats[key].competitions[competitionName] += gamePoints;
+              highSchoolPlayerStats[key].competitions[competitionName] = (highSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
           }
       }
 
@@ -435,11 +488,9 @@ function App() {
           maleHighSchoolPlayerStats[key].totalAssists += gameAssists;
           maleHighSchoolPlayerStats[key].totalRebounds += gameRebounds;
           maleHighSchoolPlayerStats[key].totalBlocks += gameBlocks;
+          maleHighSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
           if (competitionName) {
-              if (!maleHighSchoolPlayerStats[key].competitions[competitionName]) {
-                  maleHighSchoolPlayerStats[key].competitions[competitionName] = 0;
-              }
-              maleHighSchoolPlayerStats[key].competitions[competitionName] += gamePoints;
+              maleHighSchoolPlayerStats[key].competitions[competitionName] = (maleHighSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
           }
       }
 
@@ -452,25 +503,51 @@ function App() {
           femaleHighSchoolPlayerStats[key].totalAssists += gameAssists;
           femaleHighSchoolPlayerStats[key].totalRebounds += gameRebounds;
           femaleHighSchoolPlayerStats[key].totalBlocks += gameBlocks;
+          femaleHighSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
           if (competitionName) {
-              if (!femaleHighSchoolPlayerStats[key].competitions[competitionName]) {
-                  femaleHighSchoolPlayerStats[key].competitions[competitionName] = 0;
-              }
-              femaleHighSchoolPlayerStats[key].competitions[competitionName] += gamePoints;
+              femaleHighSchoolPlayerStats[key].competitions[competitionName] = (femaleHighSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
           }
+      }
+
+      // Debugging for Kim Jun-hwan (after aggregation)
+      if (playerName === '김준환' && teamName === '전주고등학교') {
+        console.log('After aggregation (middleSchoolPlayerStats): ', JSON.parse(JSON.stringify(middleSchoolPlayerStats[key] || {})));
+        console.log('After aggregation (maleMiddleSchoolPlayerStats): ', JSON.parse(JSON.stringify(maleMiddleSchoolPlayerStats[key] || {})));
+        console.log('After aggregation (highSchoolPlayerStats): ', JSON.parse(JSON.stringify(highSchoolPlayerStats[key] || {})));
+        console.log('After aggregation (maleHighSchoolPlayerStats): ', JSON.parse(JSON.stringify(maleHighSchoolPlayerStats[key] || {})));
+        console.log('--- End of record processing for Kim Jun-hwan ---');
       }
     });
 
+    // Calculate averages before finalizing and sorting
+    const calculateAverages = (stats) => {
+      for (const key in stats) {
+        const player = stats[key];
+        player.avgPoints = player.gamesPlayed > 0 ? (player.totalPoints / player.gamesPlayed).toFixed(1) : 0;
+        player.avgAssists = player.gamesPlayed > 0 ? (player.totalAssists / player.gamesPlayed).toFixed(1) : 0;
+        player.avgRebounds = player.gamesPlayed > 0 ? (player.totalRebounds / player.gamesPlayed).toFixed(1) : 0;
+        player.avgBlocks = player.gamesPlayed > 0 ? (player.totalBlocks / player.gamesPlayed).toFixed(1) : 0;
+      }
+      return stats;
+    };
+
+    const middleSchoolStatsWithAverages = calculateAverages(middleSchoolPlayerStats);
+    const maleMiddleSchoolStatsWithAverages = calculateAverages(maleMiddleSchoolPlayerStats);
+    const femaleMiddleSchoolStatsWithAverages = calculateAverages(femaleMiddleSchoolPlayerStats);
+    const highSchoolStatsWithAverages = calculateAverages(highSchoolPlayerStats);
+    const maleHighSchoolStatsWithAverages = calculateAverages(maleHighSchoolPlayerStats);
+    const femaleHighSchoolStatsWithAverages = calculateAverages(femaleHighSchoolPlayerStats);
+
     return {
         middleSchool: {
-            all: finalizeAndSort(middleSchoolPlayerStats, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'),
-            male: finalizeAndSort(maleMiddleSchoolPlayerStats, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'),
-            female: finalizeAndSort(femaleMiddleSchoolPlayerStats, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'),
+            all: finalizeAndSort(middleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
+            male: finalizeAndSort(maleMiddleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
+            female: finalizeAndSort(femaleMiddleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
         },
         highSchool: {
-            all: finalizeAndSort(highSchoolPlayerStats, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'),
-            male: finalizeAndSort(maleHighSchoolPlayerStats, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'),
-            female: finalizeAndSort(femaleHighSchoolPlayerStats, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks'),
+            all: finalizeAndSort(highSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
+            male: finalizeAndSort(maleHighSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
+            female: finalizeAndSort(femaleHighSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
         }
     };
   };
@@ -557,7 +634,7 @@ function App() {
       setMiddleSchoolRankings(middleSchool);
       setHighSchoolRankings(highSchool);
 
-      const uniqueCompetitions = ['전체', ...new Set(allRecords.map(record => record['대회명']).filter(Boolean))];
+      const uniqueCompetitions = ['전체', ...new Set(allRecords.map(record => record['대회명'] ? record['대회명'].trim() : '').filter(Boolean))];
       // setCompetitions(uniqueCompetitions);
     };
 
