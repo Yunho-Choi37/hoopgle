@@ -71,6 +71,8 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
               <div className="card-header">
                 <span className="ranking-number">{displayRank}위</span>
                 {player.name} <span className="jersey-number">no.{player.jersey}</span>
+                {rankingType === 'avgPoints' && displayRank <= 5 && <span className="flame-emoji"> 🔥</span>}
+                {rankingType === 'avgAssists' && displayRank <= 5 && <span className="dime-dealer-emoji"> 🏀</span>}
                 <span className="team-name-mobile">{player.team.replace('(', '').replace(')', '')}</span>
               </div>
               <div className="card-body">
@@ -538,6 +540,10 @@ function App() {
     const maleHighSchoolStatsWithAverages = calculateAverages(maleHighSchoolPlayerStats);
     const femaleHighSchoolStatsWithAverages = calculateAverages(femaleHighSchoolPlayerStats);
 
+    // Add console logs for debugging
+    console.log('Final middleSchoolStatsWithAverages:', JSON.stringify(middleSchoolStatsWithAverages, null, 2));
+    console.log('Final highSchoolStatsWithAverages:', JSON.stringify(highSchoolStatsWithAverages, null, 2));
+
     return {
         middleSchool: {
             all: finalizeAndSort(middleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'),
@@ -681,6 +687,84 @@ function App() {
     setDisplayRecords([]);
     setSearchTerm('');
     setShowRankingsPage(false); // Ensure rankings page is hidden
+  };
+
+  // Helper function to check if a player is a hot player (top 5 in avgPoints within their school category)
+  const isHotPlayer = (playerName, playerTeam) => {
+    // Determine if the player is middle school or high school
+    const isMiddleSchoolPlayer = playerTeam.includes('중학교') || playerTeam.endsWith('중');
+    const isHighSchoolPlayer = playerTeam.includes('고등학교') || playerTeam.endsWith('고');
+
+    let relevantRankings = [];
+    if (isMiddleSchoolPlayer) {
+      relevantRankings = middleSchoolRankings.all;
+    } else if (isHighSchoolPlayer) {
+      relevantRankings = highSchoolRankings.all;
+    } else {
+      // If team type cannot be determined, or it's not a school team, not a hot player
+      return false;
+    }
+
+    const sortedByAvgPoints = [...relevantRankings].sort((a, b) => b.avgPoints - a.avgPoints);
+
+    console.log('isHotPlayer: Checking for', playerName, playerTeam);
+    console.log('isHotPlayer: Relevant Rankings (first 5):', JSON.stringify(sortedByAvgPoints.slice(0, 5), null, 2));
+
+    for (let i = 0; i < Math.min(5, sortedByAvgPoints.length); i++) {
+      const player = sortedByAvgPoints[i];
+      // Compare name and team to identify the player
+      if (player.name === playerName && player.team === playerTeam) {
+        console.log('isHotPlayer: Found hot player!', playerName, playerTeam);
+        return true;
+      }
+    }
+    console.log('isHotPlayer: Player not in top 5 of their category.', playerName, playerTeam);
+    return false;
+  };
+
+  // Helper function to check if a player is a dime dealer (top 5 in avgAssists within their school category)
+  const isDimeDealer = (playerName, playerTeam) => {
+    const isMiddleSchoolPlayer = playerTeam.includes('중학교') || playerTeam.endsWith('중');
+    const isHighSchoolPlayer = playerTeam.includes('고등학교') || playerTeam.endsWith('고');
+
+    // Determine gender classification for middle school
+    const specificFemaleMiddleSchools = ['수원제일중학교', '연암중학교', '인천동수중학교', '전주기전중학교', '효성중학교', '영광홍농중학교', '수피아여자중학교', '봉의중학교', '대전월평중학교'];
+    const isFemaleMiddleSchool = (isMiddleSchoolPlayer && (playerTeam.includes('여자') || playerTeam.includes('여중'))) || specificFemaleMiddleSchools.includes(playerTeam);
+
+    // Determine gender classification for high school
+    const specificFemaleHighSchools = ['법서고등학교', '분당경영고등학교', '법성고등학교'];
+    const isFemaleHighSchool = (isHighSchoolPlayer && (playerTeam.includes('여자') || playerTeam.includes('여고'))) || specificFemaleHighSchools.includes(playerTeam);
+
+
+    let relevantRankings = [];
+    if (isFemaleMiddleSchool) { // Check for female middle school
+      relevantRankings = middleSchoolRankings.female;
+    } else if (isFemaleHighSchool) { // Check for female high school
+      relevantRankings = highSchoolRankings.female;
+    } else if (isMiddleSchoolPlayer) { // Male middle school (default if not female)
+      relevantRankings = middleSchoolRankings.male;
+    } else if (isHighSchoolPlayer) { // Male high school (default if not female)
+      relevantRankings = highSchoolRankings.male;
+    } else {
+      // If team type cannot be determined, or it's not a school team, not a dime dealer
+      console.log('isDimeDealer: Could not determine school type for', playerName, playerTeam);
+      return false;
+    }
+
+    const sortedByAvgAssists = [...relevantRankings].sort((a, b) => b.avgAssists - a.avgAssists);
+
+    console.log('isDimeDealer: Checking for', playerName, playerTeam);
+    console.log('isDimeDealer: Relevant Rankings (first 5):', JSON.stringify(sortedByAvgAssists.slice(0, 5), null, 2));
+
+    for (let i = 0; i < Math.min(5, sortedByAvgAssists.length); i++) {
+      const player = sortedByAvgAssists[i];
+      if (player.name === playerName && player.team === playerTeam) {
+        console.log('isDimeDealer: Found dime dealer!', playerName, playerTeam);
+        return true;
+      }
+    }
+    console.log('isDimeDealer: Player not in top 5 of their category.', playerName, playerTeam);
+    return false;
   };
 
   const handleGoBack = () => {
@@ -916,7 +1000,10 @@ function App() {
                 {selectionMode === 'competition' && playerInfo && (
                   <div className="player-profile-box">
                     <div className="player-profile-summary">
-                      <h3>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span></h3>
+                      <h3>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span>
+                      {isHotPlayer(playerInfo['선수명'], playerInfo['소속팀']) && <span className="flame-emoji"> 🔥 Hot Player</span>}
+                      {isDimeDealer(playerInfo['선수명'], playerInfo['소속팀']) && <span className="dime-dealer-emoji"> 🏀 Dime Dealer</span>}
+                      </h3>
                       <p className="team-name">{playerInfo['소속팀']}</p>
                       <p>키: (정보 없음) | 포지션: (정보 없음)</p>
                     </div>
@@ -973,7 +1060,9 @@ function App() {
               <div className="results-container">
                 {renderHeader()}
                 <div className="player-profile-container">
-                  <h2>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span></h2>
+                  <h2>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span>
+                  {isHotPlayer(playerInfo['선수명'], playerInfo['소속팀']) && <span className="flame-emoji"> 🔥</span>}
+                  </h2>
                   <p className="team-name">{playerInfo['소속팀']}</p>
                   {/* Placeholder for Height and Position */}
                   <p>키: (정보 없음) | 포지션: (정보 없음)</p>
