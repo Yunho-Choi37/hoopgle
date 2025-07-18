@@ -7,7 +7,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
   const [middleSchoolSubTab, setMiddleSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
-  const [rankingType, setRankingType] = useState('totalPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'
+  const [rankingType, setRankingType] = useState('avgPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'avgPoints', 'avgAssists', 'avgRebounds'
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
 
   const getSortedRankings = (rankings) => {
@@ -32,13 +32,16 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
 
   const renderRankingList = (rankings) => {
     const sortedRankings = getSortedRankings(rankings);
+    console.log('renderRankingList: sortedRankings (first 10):', JSON.stringify(sortedRankings.slice(0, 10), null, 2));
 
     // Filter by search term and limit to top 50
     const filteredRankings = sortedRankings
-      .filter(player => 
-        player.name.toLowerCase().includes(searchTerm.toLowerCase())
+      .filter(player =>
+        player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        player.team.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .slice(0, 50); // Limit to top 50 players
+    console.log('renderRankingList: filteredRankings (first 10):', JSON.stringify(filteredRankings.slice(0, 10), null, 2));
 
     if (filteredRankings.length === 0) {
       return <p className="no-results-message">검색 결과가 없습니다.</p>;
@@ -73,6 +76,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
                 {player.name} <span className="jersey-number">no.{player.jersey}</span>
                 {rankingType === 'avgPoints' && displayRank <= 5 && <span className="flame-emoji"> 🔥</span>}
                 {rankingType === 'avgAssists' && displayRank <= 5 && <span className="dime-dealer-emoji"> 🏀</span>}
+                {rankingType === 'avgRebounds' && displayRank <= 5 && <span className="sky-sweeper-emoji"> 🖐️</span>}
                 <span className="team-name-mobile">{player.team.replace('(', '').replace(')', '')}</span>
               </div>
               <div className="card-body">
@@ -149,13 +153,13 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
       <div className="ranking-tabs">
         <button 
           className={`tab-button ${activeTab === 'middleSchool' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('middleSchool'); setMiddleSchoolSubTab('all'); setRankingType('totalPoints'); setSearchTerm(''); }}
+          onClick={() => { setActiveTab('middleSchool'); setMiddleSchoolSubTab('all'); setRankingType('avgPoints'); setSearchTerm(''); }}
         >
           중등부
         </button>
         <button 
           className={`tab-button ${activeTab === 'highSchool' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('highSchool'); setHighSchoolSubTab('all'); setRankingType('totalPoints'); setSearchTerm(''); }}
+          onClick={() => { setActiveTab('highSchool'); setHighSchoolSubTab('all'); setRankingType('avgPoints'); setSearchTerm(''); }}
         >
           고등부
         </button>
@@ -209,6 +213,30 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
 
       <div className="ranking-type-tabs">
         <button
+          className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
+        >
+          AVG 득점
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'avgAssists' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgAssists'); setSearchTerm(''); }}
+        >
+          AVG 어시스트
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'avgRebounds' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgRebounds'); setSearchTerm(''); }}
+        >
+          AVG 리바운드
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'totalBlocks' ? 'active' : ''}`}
+          onClick={() => { setRankingType('totalBlocks'); setSearchTerm(''); }}
+        >
+          블록슛
+        </button>
+        <button
           className={`type-tab-button ${rankingType === 'totalPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalPoints'); setSearchTerm(''); }}
         >
@@ -218,44 +246,20 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
           className={`type-tab-button ${rankingType === 'totalAssists' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalAssists'); setSearchTerm(''); }}
         >
-          어시스트
+          총 어시스트
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalRebounds' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalRebounds'); setSearchTerm(''); }}
         >
-          리바운드
-        </button>
-        <button
-          className={`type-tab-button ${rankingType === 'totalBlocks' ? 'active' : ''}`}
-          onClick={() => { setRankingType('totalBlocks'); setSearchTerm(''); }}
-        >
-          블록슛
-        </button>
-        <button
-          className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
-          onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
-        >
-          평균 득점
-        </button>
-        <button
-          className={`type-tab-button ${rankingType === 'avgAssists' ? 'active' : ''}`}
-          onClick={() => { setRankingType('avgAssists'); setSearchTerm(''); }}
-        >
-          평균 어시스트
-        </button>
-        <button
-          className={`type-tab-button ${rankingType === 'avgRebounds' ? 'active' : ''}`}
-          onClick={() => { setRankingType('avgRebounds'); setSearchTerm(''); }}
-        >
-          평균 리바운드
+          총 리바운드
         </button>
       </div>
 
       <div className="ranking-search-bar">
         <input
           type="text"
-          placeholder="선수명 검색..."
+          placeholder="선수명 또는 학교명 검색..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -767,6 +771,44 @@ function App() {
     return false;
   };
 
+  // Helper function to check if a player is a Sky Sweeper (top 5 in avgRebounds within their school category)
+  const isSkySweeper = (playerName, playerTeam) => {
+    const isMiddleSchoolPlayer = playerTeam.includes('중학교') || playerTeam.endsWith('중');
+    const isHighSchoolPlayer = playerTeam.includes('고등학교') || playerTeam.endsWith('고');
+
+    // Determine gender classification for middle school
+    const specificFemaleMiddleSchools = ['수원제일중학교', '연암중학교', '인천동수중학교', '전주기전중학교', '효성중학교', '영광홍농중학교', '수피아여자중학교', '봉의중학교', '대전월평중학교'];
+    const isFemaleMiddleSchool = (isMiddleSchoolPlayer && (playerTeam.includes('여자') || playerTeam.includes('여중'))) || specificFemaleMiddleSchools.includes(playerTeam);
+
+    // Determine gender classification for high school
+    const specificFemaleHighSchools = ['법서고등학교', '분당경영고등학교', '법성고등학교'];
+    const isFemaleHighSchool = (isHighSchoolPlayer && (playerTeam.includes('여자') || playerTeam.includes('여고'))) || specificFemaleHighSchools.includes(playerTeam);
+
+
+    let relevantRankings = [];
+    if (isFemaleMiddleSchool) { // Check for female middle school
+      relevantRankings = middleSchoolRankings.female;
+    } else if (isFemaleHighSchool) { // Check for female high school
+      relevantRankings = highSchoolRankings.female;
+    } else if (isMiddleSchoolPlayer) { // Male middle school (default if not female)
+      relevantRankings = middleSchoolRankings.male;
+    } else if (isHighSchoolPlayer) { // Male high school (default if not female)
+      relevantRankings = highSchoolRankings.male;
+    } else {
+      return false;
+    }
+
+    const sortedByAvgRebounds = [...relevantRankings].sort((a, b) => b.avgRebounds - a.avgRebounds);
+
+    for (let i = 0; i < Math.min(5, sortedByAvgRebounds.length); i++) {
+      const player = sortedByAvgRebounds[i];
+      if (player.name === playerName && player.team === playerTeam) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handleGoBack = () => {
     // Case 1: From final results table back to selection screen
     if (showResults) {
@@ -1003,6 +1045,7 @@ function App() {
                       <h3>{playerInfo['선수명']} <span className="jersey-number">no.{playerInfo['등번호']}</span>
                       {isHotPlayer(playerInfo['선수명'], playerInfo['소속팀']) && <span className="flame-emoji"> 🔥 Hot Player</span>}
                       {isDimeDealer(playerInfo['선수명'], playerInfo['소속팀']) && <span className="dime-dealer-emoji"> 🏀 Dime Dealer</span>}
+                      {isSkySweeper(playerInfo['선수명'], playerInfo['소속팀']) && <span className="sky-sweeper-emoji"> 🖐️ Sky Sweeper</span>}
                       </h3>
                       <p className="team-name">{playerInfo['소속팀']}</p>
                       <p>키: (정보 없음) | 포지션: (정보 없음)</p>
