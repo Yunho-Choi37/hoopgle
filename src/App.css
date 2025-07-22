@@ -185,7 +185,7 @@ table {
 
 .competition-button {
   background-color: #f0f0f0;
-  border: 1px solid #ccc;
+  border: 1px solid #191970; /* 남색 테두리로 변경 */
   border-radius: 50%; /* 원형으로 변경 */
   width: 80px; /* 너비와 높이를 동일하게 설정 */
   height: 80px; /* 너비와 높이를 동일하게 설정 */
@@ -219,6 +219,38 @@ table {
   padding: 20px;
   margin-bottom: 20px; /* 대회 선택 박스와 간격 */
   text-align: center;
+}
+
+.player-avg-stats-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.avg-stat-item-circle {
+  background-color: #f0f0f0;
+  border: 2px solid #191970; /* 남색 테두리로 변경 */
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.avg-stat-item-circle .label {
+  font-size: 13px;
+  color: #3c4043;
+}
+
+.avg-stat-item-circle .value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #191970; /* 남색으로 변경 */
 }
 
 thead {

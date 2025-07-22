@@ -358,6 +358,26 @@ function App() {
   const [showRankingsPage, setShowRankingsPage] = useState(false); // New state for rankings page
   const [middleSchoolRankings, setMiddleSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store middle school rankings
   const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store high school rankings
+  const [selectedPlayerAvgStats, setSelectedPlayerAvgStats] = useState(null);
+
+  // Helper function to find player's ranking data
+  const findPlayerRanking = (playerName, playerTeam) => {
+    const isMiddleSchoolPlayer = playerTeam.includes('중학교') || playerTeam.endsWith('중');
+    const isHighSchoolPlayer = playerTeam.includes('고등학교') || playerTeam.endsWith('고');
+
+    let rankingsToSearch = [];
+    if (isMiddleSchoolPlayer) {
+        rankingsToSearch = middleSchoolRankings.all;
+    } else if (isHighSchoolPlayer) {
+        rankingsToSearch = highSchoolRankings.all;
+    }
+
+    if (rankingsToSearch.length > 0) {
+        const playerRankData = rankingsToSearch.find(p => p.name === playerName && p.team === playerTeam);
+        return playerRankData;
+    }
+    return null;
+  };
 
   // Helper function to calculate total points rankings, separated by school type
   const calculateRankingsBySchoolType = (records) => {
@@ -660,6 +680,7 @@ function App() {
     setShowDetailPage(false); // Ensure detail page is hidden
     setIsTeamSearchMode(false);
     setShowRankingsPage(false); // Ensure rankings page is hidden
+    setSelectedPlayerAvgStats(null);
   };
 
   const handleGoToDetailPage = () => {
@@ -840,6 +861,7 @@ function App() {
     setSelectedCompetition('전체'); // Reset selected competition filter
     setAvailableCompetitions([]); // Reset available competitions
     setSelectedPlayerRecords([]); // Reset selected player records
+    setSelectedPlayerAvgStats(null);
 
     if (!searchTerm.trim()) {
       return;
@@ -927,6 +949,10 @@ function App() {
         const recordsForSelectedPlayer = uniquePlayerTeamCombinations[0];
         setSelectedPlayerRecords(recordsForSelectedPlayer); // Store all records for this player
 
+        const playerInfo = recordsForSelectedPlayer[0];
+        const playerRankData = findPlayerRanking(playerInfo['선수명'], playerInfo['소속팀']);
+        setSelectedPlayerAvgStats(playerRankData);
+
         const comps = ['전체', ...new Set(recordsForSelectedPlayer.map(record => record['대회명']).filter(Boolean))];
         setAvailableCompetitions(comps);
         console.log('handleSearch - single player, selectedPlayerRecords:', recordsForSelectedPlayer);
@@ -958,6 +984,8 @@ function App() {
 
     if (data && data.length > 0) {
       setSelectedPlayerRecords(data); // Store all records for this player
+      const playerRankData = findPlayerRanking(player['선수명'], player['소속팀']);
+      setSelectedPlayerAvgStats(playerRankData);
       const comps = ['전체', ...new Set(data.map(record => record['대회명']).filter(Boolean))];
       setAvailableCompetitions(comps);
       setNeedsSelection(true); // Always show competition selection
@@ -983,6 +1011,8 @@ function App() {
 
     if (data && data.length > 0) {
       setSelectedPlayerRecords(data); // Store all records for this player
+      const playerRankData = findPlayerRanking(playerName, playerTeam);
+      setSelectedPlayerAvgStats(playerRankData);
       const comps = ['전체', ...new Set(data.map(record => record['대회명']).filter(Boolean))];
       setAvailableCompetitions(comps);
       setNeedsSelection(true); // Always show competition selection
@@ -1049,6 +1079,22 @@ function App() {
                       </h3>
                       <p className="team-name">{playerInfo['소속팀']}</p>
                       <p>키: (정보 없음) | 포지션: (정보 없음)</p>
+                      {selectedPlayerAvgStats && (
+                        <div className="player-avg-stats-container">
+                          <div className="avg-stat-item-circle">
+                            <span className="label">평균 득점</span>
+                            <span className="value">{selectedPlayerAvgStats.avgPoints}</span>
+                          </div>
+                          <div className="avg-stat-item-circle">
+                            <span className="label">평균 어시스트</span>
+                            <span className="value">{selectedPlayerAvgStats.avgAssists}</span>
+                          </div>
+                          <div className="avg-stat-item-circle">
+                            <span className="label">평균 리바운드</span>
+                            <span className="value">{selectedPlayerAvgStats.avgRebounds}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
