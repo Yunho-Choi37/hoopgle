@@ -397,7 +397,36 @@ const CommunityPage = ({ onGoBack }) => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      setLoading(true);
+      await supabase.auth.signOut();
+      
+      // 로그아웃 후 상태 정리
+      setSession(null);
+      setUserProfile(null);
+      setMessages([]);
+      setNewMessage('');
+      setEmail('');
+      setPassword('');
+      setAuthMessage('');
+      setAuthView('login');
+      setActiveReplyInput(null);
+      setReplyText('');
+      setExpandedVideos(new Set());
+      setLinkMetadata({});
+      
+      // localStorage 정리
+      localStorage.removeItem('activeReplyInput');
+      localStorage.removeItem('replyText');
+      localStorage.removeItem('activeChannel');
+      
+      console.log('로그아웃 성공');
+    } catch (error) {
+      console.error('로그아웃 중 오류:', error);
+      alert('로그아웃 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReaction = async (messageId, reactionType) => {
