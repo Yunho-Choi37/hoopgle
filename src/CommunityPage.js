@@ -22,6 +22,11 @@ const CommunityPage = ({ onGoBack }) => {
   const [expandedVideos, setExpandedVideos] = useState(new Set());
   const [linkMetadata, setLinkMetadata] = useState({});
 
+  // 운영자 권한 확인 함수
+  const isAdmin = () => {
+    return session?.user?.email === 'ballaforlife@naver.com';
+  };
+
   // localStorage에서 댓글 상태 복원
   useEffect(() => {
     const savedReplyInput = localStorage.getItem('activeReplyInput');
@@ -345,6 +350,12 @@ const CommunityPage = ({ onGoBack }) => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === '' || !session?.user) return;
+    
+    // 안내사항 채널에서 운영자 권한 확인
+    if (activeChannel === '안내사항' && !isAdmin()) {
+      alert('안내사항 채널은 운영자만 작성할 수 있습니다.');
+      return;
+    }
     
     // 280자 제한 확인
     if (newMessage.trim().length > 280) {
@@ -759,25 +770,12 @@ const CommunityPage = ({ onGoBack }) => {
   };
 
   const renderContent = () => {
-    if (activeChannel === '안내사항') {
-      return (
-        <>
-          <div className="message-item">
-            <span className="message-author">운영자</span>
-            <p>Hoop Zone에 오신 것을 환영합니다! 커뮤니티 규칙을 잘 지켜주세요.</p>
-          </div>
-          <div className="message-item">
-            <span className="message-author">운영자</span>
-            <p>선수 비방이나 욕설은 경고 없이 삭제될 수 있습니다.</p>
-          </div>
-        </>
-      );
-    }
-
     return (
       <div className="messages-list-content">
         {messages.length === 0 ? (
-          <p className="no-messages">메시지가 없습니다. 첫 메시지를 남겨보세요!</p>
+          <p className="no-messages">
+            {activeChannel === '안내사항' ? '안내사항 채널입니다.' : '메시지가 없습니다. 첫 메시지를 남겨보세요!'}
+          </p>
         ) : (
           messages.map((msg) => (
             <div key={msg.id} className="message-item">
@@ -913,12 +911,14 @@ const CommunityPage = ({ onGoBack }) => {
         </ul>
         {session && (
           <div className="profile-section">
-            <span className="profile-name">
-              {userProfile?.username || session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자'}
-            </span>
-            <button onClick={handleSignOut} className="signout-button" disabled={loading}>
-              {loading ? '로그아웃 중...' : '로그아웃'}
-            </button>
+            <div className="profile-info">
+              <span className="profile-name">
+                {userProfile?.username || session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자'}
+              </span>
+              <button onClick={handleSignOut} className="signout-button" disabled={loading}>
+                {loading ? '로그아웃 중...' : '로그아웃'}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -940,27 +940,35 @@ const CommunityPage = ({ onGoBack }) => {
         <div className="chat-input-box">
           {session ? (
             <>
-              <div className="input-container">
-                <input
-                  type="text"
-                  placeholder={`${activeChannel}에 메시지 보내기 (280자 제한)`}
-                  value={newMessage}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value.length <= 280) {
-                      setNewMessage(value);
-                    }
-                  }}
-                  onKeyPress={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
-                  maxLength={280}
-                />
-                <div className="character-count">
-                  {newMessage.length}/280
+              {activeChannel === '안내사항' && !isAdmin() ? (
+                <div className="admin-only-message">
+                  <p>안내사항 채널은 운영자만 작성할 수 있습니다.</p>
                 </div>
-              </div>
-              <button onClick={handleSendMessage} disabled={newMessage.trim().length === 0 || newMessage.length > 280}>
-                전송
-              </button>
+              ) : (
+                <>
+                  <div className="input-container">
+                    <input
+                      type="text"
+                      placeholder={`${activeChannel}에 메시지 보내기 (280자 제한)`}
+                      value={newMessage}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length <= 280) {
+                          setNewMessage(value);
+                        }
+                      }}
+                      onKeyPress={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                      maxLength={280}
+                    />
+                    <div className="character-count">
+                      {newMessage.length}/280
+                    </div>
+                  </div>
+                  <button onClick={handleSendMessage} disabled={newMessage.trim().length === 0 || newMessage.length > 280}>
+                    전송
+                  </button>
+                </>
+              )}
             </>
           ) : (
             renderAuth()
