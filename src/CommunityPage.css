@@ -934,6 +934,37 @@
     white-space: nowrap;
   }
   
+  /* 모바일에서 프로필 섹션 최적화 */
+  .profile-section {
+    padding: 12px 10px;
+    min-height: auto;
+  }
+  
+  .profile-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+  
+  .profile-name {
+    font-size: 12px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .signout-button {
+    padding: 4px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+    min-width: auto;
+    flex-shrink: 0;
+  }
+  
   .sidebar-toggle-button {
     left: -35px;
     width: 28px;
@@ -1101,6 +1132,37 @@
   
   .channels-header h3.logo-small {
     font-size: 16px;
+  }
+  
+  /* 모바일에서 프로필 섹션 최적화 */
+  .profile-section {
+    padding: 8px;
+    min-height: auto;
+  }
+  
+  .profile-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+  
+  .profile-name {
+    font-size: 11px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .signout-button {
+    padding: 3px 6px;
+    font-size: 10px;
+    white-space: nowrap;
+    min-width: auto;
+    flex-shrink: 0;
   }
   
   .sidebar-toggle-button {
