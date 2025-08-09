@@ -1,0 +1,878 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from './supabaseClient';
+import SignUpPage from './SignUpPage'; // SignUpPage를 import 합니다.
+import './CommunityPage.css';
+
+const CommunityPage = ({ onGoBack, session }) => {
+  const [activeChannel, setActiveChannel] = useState('안내사항');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const messagesContainerRef = useRef(null);
+
+  // 'login', 'signup', 'success' 뷰 상태를 관리합니다.
+  const [authView, setAuthView] = useState('login'); 
+  const [authMessage, setAuthMessage] = useState('');
+  const [activeReplyInput, setActiveReplyInput] = useState(null);
+  const [replyText, setReplyText] = useState('');
+
+  // 링크 감지 및 임베드 함수들
+  const detectLinks = (text) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const matches = text.match(urlRegex);
+    return matches || [];
+  };
+
+  const isYouTubeLink = (url) => {
+    return url.includes('youtube.com') || url.includes('youtu.be');
+  };
+
+  const isInstagramLink = (url) => {
+    return url.includes('instagram.com');
+  };
+
+  const getYouTubeEmbedUrl = (url) => {
+    let videoId = '';
+    if (url.includes('youtube.com/watch?v=')) {
+      videoId = url.split('v=')[1].split('&')[0];
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1].split('?')[0];
+    }
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+  };
+
+  const getInstagramEmbedUrl = (url) => {
+    // Instagram oEmbed API 사용
+    return `https://api.instagram.com/oembed/?url=${encodeURIComponent(url)}&hidecaption=true&omitscript=true`;
+  };
+
+  // 웹사이트 메타데이터 가져오기 (간단한 버전)
+  const fetchWebsiteMetadata = async (url) => {
+    try {
+      // URL 유효성 검사
+      if (!url || !url.startsWith('http')) {
+        return null;
+      }
+      
+      const urlObj = new URL(url);
+      const domain = urlObj.hostname.replace('www.', '');
+      const path = urlObj.pathname;
+      
+      // 특정 사이트들에 대한 기본 정보
+      const siteInfo = {
+        'sports.naver.com': {
+          title: '네이버 스포츠',
+          description: '스포츠 뉴스 및 실시간 정보',
+          image: 'https://ssl.pstatic.net/sstatic/keypage/outside/scui/img_og_naver.png',
+          siteName: '네이버 스포츠'
+        },
+        'news.naver.com': {
+          title: '네이버 뉴스',
+          description: '실시간 뉴스 및 기사',
+          image: 'https://ssl.pstatic.net/sstatic/keypage/outside/scui/img_og_naver.png',
+          siteName: '네이버 뉴스'
+        },
+        'blog.naver.com': {
+          title: '네이버 블로그',
+          description: '블로그 포스트',
+          image: 'https://ssl.pstatic.net/sstatic/keypage/outside/scui/img_og_naver.png',
+          siteName: '네이버 블로그'
+        },
+        'youtube.com': {
+          title: 'YouTube',
+          description: '동영상 공유 플랫폼',
+          image: 'https://www.youtube.com/s/desktop/7c155e84/img/favicon_144x144.png',
+          siteName: 'YouTube'
+        },
+        'youtu.be': {
+          title: 'YouTube',
+          description: '동영상 공유 플랫폼',
+          image: 'https://www.youtube.com/s/desktop/7c155e84/img/favicon_144x144.png',
+          siteName: 'YouTube'
+        }
+      };
+
+      // URL에서 제목 추출 시도
+      let title = siteInfo[domain]?.title || domain;
+      let description = siteInfo[domain]?.description || '웹페이지';
+      
+      // URL 경로에서 제목 추출
+      const pathParts = path.split('/').filter(part => part.length > 0);
+      if (pathParts.length > 0) {
+        const lastPart = pathParts[pathParts.length - 1];
+        if (lastPart && lastPart.length > 5) {
+          description = decodeURIComponent(lastPart).replace(/[-_]/g, ' ');
+        }
+      }
+
+      return {
+        title,
+        description,
+        image: siteInfo[domain]?.image || '',
+        siteName: siteInfo[domain]?.siteName || domain,
+        url
+      };
+    } catch (error) {
+      console.error('Error processing website metadata:', error);
+    }
+    return null;
+  };
+
+  // 웹사이트 카드 컴포넌트
+  const WebsiteCard = ({ url }) => {
+    const [metadata, setMetadata] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+      const loadMetadata = async () => {
+        try {
+          setLoading(true);
+          const data = await fetchWebsiteMetadata(url);
+          if (data) {
+            setMetadata(data);
+          } else {
+            setError(true);
+          }
+        } catch (err) {
+          console.error('Error loading website metadata:', err);
+          setError(true);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      // 즉시 로딩 시작
+      loadMetadata();
+      
+      // 3초 후에도 로딩이 안 끝나면 에러로 처리
+      const timeout = setTimeout(() => {
+        if (loading) {
+          setError(true);
+          setLoading(false);
+        }
+      }, 3000);
+
+      return () => clearTimeout(timeout);
+    }, [url]);
+
+
+
+    if (loading) {
+      return (
+        <div className="link-embed website-card loading">
+          <div className="card-skeleton">
+            <div className="skeleton-image"></div>
+            <div className="skeleton-content">
+              <div className="skeleton-title"></div>
+              <div className="skeleton-description"></div>
+              <div className="skeleton-url"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (error || !metadata) {
+      // 메타데이터를 가져올 수 없을 때 기본 링크 카드 표시
+      try {
+        const urlObj = new URL(url);
+        const domain = urlObj.hostname.replace('www.', '');
+        const path = urlObj.pathname;
+        
+        return (
+          <div className="link-embed website-card fallback">
+            <a href={url} target="_blank" rel="noopener noreferrer" className="website-card-link">
+              <div className="website-card-content">
+                <h4 className="website-card-title">🔗 {domain}</h4>
+                <p className="website-card-description">{path}</p>
+                <div className="website-card-meta">
+                  <span className="website-card-site">{domain}</span>
+                  <span className="website-card-url">{url}</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        );
+      } catch (urlError) {
+        // URL이 유효하지 않은 경우
+        return (
+          <div className="link-embed website-card error">
+            <a href={url} target="_blank" rel="noopener noreferrer" className="link-url">
+              🔗 {url}
+            </a>
+          </div>
+        );
+      }
+    }
+      
+      return (
+        <div className="link-embed website-card fallback">
+          <a href={url} target="_blank" rel="noopener noreferrer" className="website-card-link">
+            <div className="website-card-content">
+              <h4 className="website-card-title">🔗 {domain}</h4>
+              <p className="website-card-description">{path}</p>
+              <div className="website-card-meta">
+                <span className="website-card-site">{domain}</span>
+                <span className="website-card-url">{url}</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      );
+    }
+
+    return (
+      <div className="link-embed website-card">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="website-card-link">
+          {metadata.image && (
+            <div className="website-card-image">
+              <img src={metadata.image} alt={metadata.title} />
+            </div>
+          )}
+          <div className="website-card-content">
+            <h4 className="website-card-title">{metadata.title}</h4>
+            {metadata.description && (
+              <p className="website-card-description">{metadata.description}</p>
+            )}
+            <div className="website-card-meta">
+              <span className="website-card-site">{metadata.siteName}</span>
+              <span className="website-card-url">{new URL(url).hostname}</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    );
+  };
+
+  const renderMessageContent = (content) => {
+    const links = detectLinks(content);
+    if (links.length === 0) {
+      return <p className="message-text">{content}</p>;
+    }
+
+    let processedContent = content;
+    const embeds = [];
+
+    links.forEach((link, index) => {
+      const linkId = `link-${index}`;
+      processedContent = processedContent.replace(link, `[${linkId}]`);
+      
+      if (isYouTubeLink(link)) {
+        const embedUrl = getYouTubeEmbedUrl(link);
+        if (embedUrl) {
+          embeds.push(
+            <div key={linkId} className="link-embed youtube-embed">
+              <iframe
+                width="100%"
+                height="200"
+                src={embedUrl}
+                title="YouTube video"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              ></iframe>
+              <a href={link} target="_blank" rel="noopener noreferrer" className="link-url">
+                {link}
+              </a>
+            </div>
+          );
+        }
+      } else if (isInstagramLink(link)) {
+        embeds.push(
+          <div key={linkId} className="link-embed instagram-embed">
+            <iframe
+              src={`https://www.instagram.com/p/${link.split('/p/')[1]?.split('/')[0]}/embed`}
+              width="100%"
+              height="400"
+              frameBorder="0"
+              scrolling="no"
+              allowTransparency={true}
+            ></iframe>
+            <a href={link} target="_blank" rel="noopener noreferrer" className="link-url">
+              {link}
+            </a>
+          </div>
+        );
+      } else {
+        // 일반 웹사이트 링크 - 메타데이터 카드로 표시
+        embeds.push(
+          <WebsiteCard key={linkId} url={link} />
+        );
+      }
+    });
+
+    return (
+      <>
+        <p className="message-text">{processedContent}</p>
+        {embeds}
+      </>
+    );
+  };
+
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (session?.user) {
+        console.log('Fetching profile for user:', session.user.id);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('username, avatar_url')
+          .eq('id', session.user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          // 프로필이 없으면 기본값 설정
+          setUserProfile({
+            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자',
+            avatar_url: '/default-avatar.png'
+          });
+        } else {
+          console.log('User profile loaded:', data);
+          setUserProfile(data);
+        }
+      }
+    };
+    fetchUserProfile();
+  }, [session]);
+
+  const fetchMessages = async () => {
+    if (activeChannel === '안내사항') {
+      setMessages([]);
+      return;
+    }
+    console.log('Fetching messages for channel:', activeChannel);
+    const { data, error } = await supabase
+      .from('messages')
+      .select(`*,
+        profiles(username, avatar_url)
+      `)
+      .eq('channel', activeChannel)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching messages:', error);
+    } else {
+      console.log('Fetched messages:', data);
+      
+      // 각 메시지의 사용자 프로필, 반응, 댓글을 가져오기
+      const messagesWithProfiles = await Promise.all(
+        data.map(async (message) => {
+          // 프로필 가져오기
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('username, avatar_url')
+            .eq('id', message.user_id)
+            .single();
+          
+          console.log('Message profile fetch result:', { profileData, profileError, userId: message.user_id });
+          
+          // 반응 가져오기
+          const { data: reactionsData } = await supabase
+            .from('message_reactions')
+            .select('reaction_type')
+            .eq('message_id', message.id);
+          
+                      // 댓글 가져오기
+            const { data: repliesData, error: repliesError } = await supabase
+              .from('message_replies')
+              .select('*')
+              .eq('message_id', message.id)
+              .order('created_at', { ascending: true });
+            
+            if (repliesError) {
+              console.error('Error fetching replies:', repliesError);
+            }
+            
+            // 댓글의 사용자 프로필을 별도로 가져오기
+            let repliesWithProfiles = [];
+            if (repliesData && repliesData.length > 0) {
+              repliesWithProfiles = await Promise.all(
+                repliesData.map(async (reply) => {
+                  const { data: replyProfileData, error: replyProfileError } = await supabase
+                    .from('profiles')
+                    .select('username, avatar_url')
+                    .eq('id', reply.user_id)
+                    .single();
+                  
+                  if (replyProfileError) {
+                    console.error('Error fetching reply profile:', replyProfileError);
+                    return {
+                      ...reply,
+                      profiles: {
+                        username: `사용자_${reply.user_id.slice(0, 8)}`,
+                        avatar_url: '/default-avatar.png'
+                      }
+                    };
+                  }
+                  
+                  return {
+                    ...reply,
+                    profiles: replyProfileData
+                  };
+                })
+              );
+            }
+          
+          // 반응 개수 계산
+          const likes = reactionsData?.filter(r => r.reaction_type === 'like').length || 0;
+          const laughs = reactionsData?.filter(r => r.reaction_type === 'laugh').length || 0;
+          const cries = reactionsData?.filter(r => r.reaction_type === 'cry').length || 0;
+          
+          if (profileError) {
+            console.error('Error fetching profile for user:', message.user_id, profileError);
+            // 프로필이 없으면 기본값 설정
+            return {
+              ...message,
+              profiles: {
+                username: `사용자_${message.user_id.slice(0, 8)}`,
+                avatar_url: '/default-avatar.png'
+              },
+              likes,
+              laughs,
+              cries,
+              replies: repliesWithProfiles || []
+            };
+          }
+            
+            const finalMessage = {
+              ...message,
+              profiles: profileData,
+              likes,
+              laughs,
+              cries,
+              replies: repliesWithProfiles || []
+            };
+            
+            console.log('Final message with profile:', {
+              messageId: message.id,
+              username: finalMessage.profiles?.username,
+              userId: message.user_id
+            });
+            
+            return finalMessage;
+        })
+      );
+      
+      setMessages(messagesWithProfiles);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+
+    const messageSubscription = supabase
+      .channel(`messages-for-${activeChannel}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `channel=eq.${activeChannel}` },
+        (payload) => {
+          fetchMessages();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`Successfully subscribed to ${activeChannel}`);
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error(`Failed to subscribe to ${activeChannel}`);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(messageSubscription);
+    };
+  }, [activeChannel]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
+  const handleSendMessage = async () => {
+    if (newMessage.trim() === '' || !session?.user) return;
+
+    const optimisticMessage = {
+      id: Math.random(),
+      content: newMessage,
+      created_at: new Date().toISOString(),
+      user_id: session.user.id,
+      channel: activeChannel,
+      profiles: userProfile || {
+        username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자',
+        avatar_url: '/default-avatar.png'
+      },
+    };
+
+    setMessages(currentMessages => [...currentMessages, optimisticMessage]);
+
+    const messageToSend = newMessage;
+    setNewMessage('');
+
+    const { error } = await supabase
+      .from('messages')
+      .insert({
+        content: messageToSend,
+        user_id: session.user.id,
+        channel: activeChannel,
+      });
+
+    if (error) {
+      console.error('Error sending message:', error);
+      setMessages(currentMessages => currentMessages.filter(m => m.id !== optimisticMessage.id));
+      setNewMessage(messageToSend);
+    }
+  };
+
+  const handleSignIn = async () => {
+    setLoading(true);
+    setAuthMessage('');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setAuthMessage(error.error_description || error.message);
+    } else if (data.user) {
+      console.log('Login successful, user data:', data.user);
+      // 로그인 성공 후 프로필 확인 및 생성
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', data.user.id)
+        .single();
+      
+      console.log('Profile check result:', { profileData, profileError });
+      
+      if (profileError && profileError.code === 'PGRST116') {
+        // 프로필이 없으면 생성
+        const username = data.user.user_metadata?.username || data.user.email?.split('@')[0] || '사용자';
+        console.log('Creating profile with username:', username);
+        
+        const { data: insertData, error: insertError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: data.user.id,
+              username: username,
+              email: data.user.email,
+              avatar_url: '/default-avatar.png'
+            }
+          ])
+          .select();
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+        } else {
+          console.log('Profile created successfully:', insertData);
+        }
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleSignOut = async () => {
+    setLoading(true);
+    await supabase.auth.signOut();
+    setLoading(false);
+    setUserProfile(null);
+    setAuthView('login');
+  };
+
+  const handleReaction = async (messageId, reactionType) => {
+    console.log('handleReaction called with:', { messageId, reactionType, userId: session?.user?.id });
+    
+    if (!session?.user) {
+      console.log('No user session');
+      return;
+    }
+
+    try {
+      console.log('Attempting to upsert reaction:', {
+        message_id: messageId,
+        user_id: session.user.id,
+        reaction_type: reactionType
+      });
+      
+      const { data, error } = await supabase
+        .from('message_reactions')
+        .upsert({
+          message_id: messageId,
+          user_id: session.user.id,
+          reaction_type: reactionType
+        })
+        .select();
+
+      if (error) {
+        console.error('Error adding reaction:', error);
+        alert('반응 저장 중 오류가 발생했습니다: ' + error.message);
+      } else {
+        console.log('Reaction saved successfully:', data);
+        // 메시지 목록 새로고침
+        fetchMessages();
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      alert('반응 저장 중 오류가 발생했습니다: ' + error.message);
+    }
+  };
+
+  const toggleReplyInput = (messageId) => {
+    if (activeReplyInput === messageId) {
+      setActiveReplyInput(null);
+      setReplyText('');
+    } else {
+      setActiveReplyInput(messageId);
+      setReplyText('');
+    }
+  };
+
+  const handleSendReply = async (messageId) => {
+    console.log('handleSendReply called with:', { messageId, replyText, userId: session?.user?.id });
+    
+    if (!replyText.trim()) {
+      console.log('Reply text is empty');
+      return;
+    }
+    
+    if (!session?.user) {
+      console.log('No user session');
+      return;
+    }
+
+    try {
+      console.log('Attempting to insert reply:', {
+        message_id: messageId,
+        user_id: session.user.id,
+        content: replyText.trim()
+      });
+      
+      const { data, error } = await supabase
+        .from('message_replies')
+        .insert({
+          message_id: messageId,
+          user_id: session.user.id,
+          content: replyText.trim()
+        })
+        .select();
+
+      if (error) {
+        console.error('Error sending reply:', error);
+        alert('댓글 저장 중 오류가 발생했습니다: ' + error.message);
+      } else {
+        console.log('Reply saved successfully:', data);
+        setReplyText('');
+        setActiveReplyInput(null);
+        // 메시지 목록 새로고침
+        fetchMessages();
+      }
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      alert('댓글 저장 중 오류가 발생했습니다: ' + error.message);
+    }
+  };
+
+  const renderAuth = () => {
+    if (authView === 'signup') {
+      return (
+        <SignUpPage 
+          onSignUpSuccess={() => {
+            setAuthMessage('가입 확인을 위해 이메일을 확인해주세요.');
+            setAuthView('login');
+          }}
+          onBackToLogin={() => setAuthView('login')}
+        />
+      );
+    }
+
+    return (
+      <div className="login-prompt">
+        <h3>채팅에 참여하려면 로그인하세요</h3>
+        {authMessage && <p className="auth-message">{authMessage}</p>}
+        <input
+          type="email"
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder="비밀번호"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <div className="login-buttons">
+          <button onClick={handleSignIn} disabled={loading}>
+            {loading ? '로그인 중...' : '로그인'}
+          </button>
+          <button onClick={() => { setAuthView('signup'); setAuthMessage(''); }} disabled={loading}>
+            회원가입
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderContent = () => {
+    // 안내사항 채널은 항상 동일한 내용을 보여줍니다.
+    if (activeChannel === '안내사항') {
+      return (
+        <>
+          <div className="message-item">
+            <span className="message-author">운영자</span>
+            <p>Hoop Zone에 오신 것을 환영합니다! 커뮤니티 규칙을 잘 지켜주세요.</p>
+          </div>
+          <div className="message-item">
+            <span className="message-author">운영자</span>
+            <p>선수 비방이나 욕설은 경고 없이 삭제될 수 있습니다.</p>
+          </div>
+        </>
+      );
+    }
+    // 다른 채널의 메시지를 렌더링합니다.
+    return (
+      <div className="messages-list-content">
+        {messages.length === 0 ? (
+          <p className="no-messages">메시지가 없습니다. 첫 메시지를 남겨보세요!</p>
+        ) : (
+          messages.map((msg) => (
+            <div key={msg.id} className="message-item">
+              <div className="message-content-wrapper">
+                <span className="message-author">
+                  {msg.profiles?.username || `사용자_${msg.user_id?.slice(0, 8)}`}
+                </span>
+                {renderMessageContent(msg.content)}
+                <div className="message-actions">
+                  <button className="reaction-btn" onClick={() => handleReaction(msg.id, 'like')}>
+                    👍 <span className="reaction-count">{msg.likes || 0}</span>
+                  </button>
+                  <button className="reaction-btn" onClick={() => handleReaction(msg.id, 'laugh')}>
+                    😂 <span className="reaction-count">{msg.laughs || 0}</span>
+                  </button>
+                  <button className="reaction-btn" onClick={() => handleReaction(msg.id, 'cry')}>
+                    😢 <span className="reaction-count">{msg.cries || 0}</span>
+                  </button>
+                  <button className="reply-btn" onClick={() => toggleReplyInput(msg.id)}>
+                    💬 댓글
+                  </button>
+                </div>
+                <span className="message-timestamp">{new Date(msg.created_at).toLocaleString()}</span>
+                
+                {/* 댓글 입력창 */}
+                {activeReplyInput === msg.id && (
+                  <div className="reply-input-container">
+                    <input
+                      type="text"
+                      placeholder="댓글을 입력하세요..."
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyPress={(e) => { if (e.key === 'Enter') handleSendReply(msg.id); }}
+                    />
+                    <button onClick={() => handleSendReply(msg.id)}>전송</button>
+                    <button onClick={() => setActiveReplyInput(null)}>취소</button>
+                  </div>
+                )}
+                
+                {/* 댓글 목록 */}
+                {msg.replies && msg.replies.length > 0 && (
+                  <div className="replies-container">
+                    {msg.replies.map((reply) => (
+                      <div key={reply.id} className="reply-item">
+                        <div className="reply-content">
+                          <span className="reply-author">{reply.profiles?.username || `사용자_${reply.user_id?.slice(0, 8)}`}</span>
+                          <div className="reply-text-wrapper">
+                            {renderMessageContent(reply.content)}
+                          </div>
+                        </div>
+                        <span className="reply-timestamp">{new Date(reply.created_at).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="community-page">
+      <div className={`channels-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
+        <div className="channels-header">
+          <h3 className="logo-small">
+            <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span> <span className="hoopgle-navy">Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
+          </h3>
+        </div>
+        <ul className="channel-list">
+          <li className={`channel-item ${activeChannel === '안내사항' ? 'active' : ''}`} onClick={() => setActiveChannel('안내사항')}>📢 안내사항</li>
+          <li className={`channel-item ${activeChannel === '자유채팅' ? 'active' : ''}`} onClick={() => setActiveChannel('자유채팅')}>💬 자유채팅</li>
+          <li className={`channel-item ${activeChannel === '데일리훕' ? 'active' : ''}`} onClick={() => setActiveChannel('데일리훕')}>🔥 데일리훕</li>
+        </ul>
+        {session && (
+          <div className="profile-section">
+            <span className="profile-name">
+              {userProfile?.username || session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자'}
+            </span>
+            <button onClick={handleSignOut} className="signout-button" disabled={loading}>
+              {loading ? '로그아웃 중...' : '로그아웃'}
+            </button>
+          </div>
+        )}
+      </div>
+      <div className={`chat-area ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
+        <div className="chat-header">
+          <div className="chat-header-left">
+            <h3>{activeChannel}</h3>
+          </div>
+          <div className="chat-header-right">
+            <button onClick={onGoBack} className="back-button-community">홈으로</button>
+          </div>
+        </div>
+        
+        {/* 사이드바 토글 버튼 - 노션 스타일 */}
+        <button 
+          onClick={toggleSidebar} 
+          className={`sidebar-toggle-button ${isSidebarOpen ? 'open' : 'closed'}`}
+          title={isSidebarOpen ? '사이드바 숨기기' : '사이드바 보이기'}
+        >
+          <div className="toggle-icon">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </button>
+        <div className="messages-list" ref={messagesContainerRef}>
+          {renderContent()}
+        </div>
+        {activeChannel !== '안내사항' && (
+          <div className="chat-input-box">
+            {session ? (
+              <>
+                <input
+                  type="text"
+                  placeholder={`${activeChannel}에 메시지 보내기`}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                />
+                <button onClick={handleSendMessage}>전송</button>
+              </>
+            ) : (
+              renderAuth()
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default CommunityPage;

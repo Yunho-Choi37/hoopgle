@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import CommunityPage from './CommunityPage';
+import { supabase } from './supabaseClient';
 import './App.css';
 
 // RankingsPage Component Definition
@@ -272,11 +273,6 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
   );
 };
 
-// Supabase 클라이언트 초기화
-const supabaseUrl = 'https://nwggbjyuuhtnrxdhzofo.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53Z2dianl1dWh0bnJ4ZGh6b2ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE2ODgyMTYsImV4cCI6MjA2NzI2NDIxNn0.a0eIxwPj8GEZNChQxIIm5622bPIqRg7pTXeqTrX5riI';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 // 컬럼명 매핑
 const COLUMN_MAPPING = {
   '대회명': 'Competition',
@@ -359,6 +355,7 @@ function App() {
   const [middleSchoolRankings, setMiddleSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store middle school rankings
   const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store high school rankings
   const [selectedPlayerAvgStats, setSelectedPlayerAvgStats] = useState(null);
+  const [session, setSession] = useState(null); // Add session state for CommunityPage
 
   // Helper function to find player's ranking data
   const findPlayerRanking = (playerName, playerTeam) => {
@@ -1051,11 +1048,9 @@ function App() {
       {(() => {
         if (showDetailPage) {
           return (
-            <div className="detail-page-container">
-              <h2>상세 페이지</h2>
-              <p>여기에 상세 내용을 추가할 예정입니다.</p>
-              <button onClick={handleGoBackFromDetail}>뒤로 가기</button>
-            </div>
+            <CommunityPage 
+              onGoBack={handleGoBackFromDetail}
+            />
           );
         }
 

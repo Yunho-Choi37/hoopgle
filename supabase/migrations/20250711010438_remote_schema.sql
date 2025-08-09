@@ -31,7 +31,113 @@ create table "public"."2025 주말리그 선수기록" (
     "대회명" text default '2025 주말리그'::text
 );
 
+-- 프로필 테이블 생성
+create table if not exists "public"."profiles" (
+    "id" uuid references auth.users on delete cascade primary key,
+    "username" text,
+    "avatar_url" text,
+    "created_at" timestamp with time zone default timezone('utc'::text, now()) not null,
+    "updated_at" timestamp with time zone default timezone('utc'::text, now()) not null
+);
 
+-- 메시지 테이블 생성
+create table if not exists "public"."messages" (
+    "id" uuid default gen_random_uuid() primary key,
+    "content" text not null,
+    "user_id" uuid references "public"."profiles"(id) on delete cascade not null,
+    "channel" text not null,
+    "created_at" timestamp with time zone default timezone('utc'::text, now()) not null,
+    "updated_at" timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- 메시지 반응 테이블 생성
+create table if not exists "public"."message_reactions" (
+    "id" uuid default gen_random_uuid() primary key,
+    "message_id" uuid references "public"."messages"(id) on delete cascade not null,
+    "user_id" uuid references "public"."profiles"(id) on delete cascade not null,
+    "reaction_type" text not null check (reaction_type in ('like', 'laugh', 'cry')),
+    "created_at" timestamp with time zone default timezone('utc'::text, now()) not null,
+    unique("message_id", "user_id", "reaction_type")
+);
+
+-- 댓글 테이블 생성
+create table if not exists "public"."message_replies" (
+    "id" uuid default gen_random_uuid() primary key,
+    "message_id" uuid references "public"."messages"(id) on delete cascade not null,
+    "user_id" uuid references "public"."profiles"(id) on delete cascade not null,
+    "content" text not null,
+    "created_at" timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- RLS 활성화
+alter table "public"."profiles" enable row level security;
+alter table "public"."messages" enable row level security;
+alter table "public"."message_reactions" enable row level security;
+alter table "public"."message_replies" enable row level security;
+
+-- 권한 부여
+grant all privileges on table "public"."profiles" to "anon", "authenticated", "service_role";
+grant all privileges on table "public"."messages" to "anon", "authenticated", "service_role";
+grant all privileges on table "public"."message_reactions" to "anon", "authenticated", "service_role";
+grant all privileges on table "public"."message_replies" to "anon", "authenticated", "service_role";
+
+-- 프로필 테이블 정책
+create policy "Public profiles are viewable by everyone"
+on profiles for select
+using (true);
+
+create policy "Users can insert their own profile"
+on profiles for insert
+with check (auth.uid() = id);
+
+create policy "Users can update own profile"
+on profiles for update
+using (auth.uid() = id);
+
+-- 메시지 테이블 정책
+create policy "Messages are viewable by everyone"
+on messages for select
+using (true);
+
+create policy "Authenticated users can insert messages"
+on messages for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can update own messages"
+on messages for update
+using (auth.uid() = user_id);
+
+create policy "Users can delete own messages"
+on messages for delete
+using (auth.uid() = user_id);
+
+-- 메시지 반응 테이블 정책
+create policy "Message reactions are viewable by everyone"
+on message_reactions for select
+using (true);
+
+create policy "Authenticated users can insert reactions"
+on message_reactions for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can delete own reactions"
+on message_reactions for delete
+using (auth.uid() = user_id);
+
+-- 댓글 테이블 정책
+create policy "Message replies are viewable by everyone"
+on message_replies for select
+using (true);
+
+create policy "Authenticated users can insert replies"
+on message_replies for insert
+with check (auth.uid() = user_id);
+
+create policy "Users can delete own replies"
+on message_replies for delete
+using (auth.uid() = user_id);
+
+-- RLS 활성화
 alter table "public"."2025 주말리그 선수기록" enable row level security;
 
 grant delete on table "public"."2025 주말리그 선수기록" to "anon";
