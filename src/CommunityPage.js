@@ -5,7 +5,7 @@ import './CommunityPage.css';
 
 const CommunityPage = ({ onGoBack }) => {
   const [activeChannel, setActiveChannel] = useState('안내사항');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [email, setEmail] = useState('');
@@ -344,9 +344,7 @@ const CommunityPage = ({ onGoBack }) => {
     }
   }, [messages]);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === '' || !session?.user) return;
@@ -864,20 +862,8 @@ const CommunityPage = ({ onGoBack }) => {
 
   return (
     <div className="community-page">
-      <div className={`channels-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
+      <div className="channels-sidebar">
         <div className="channels-header">
-          {/* 사이드바 토글 버튼 */}
-          <button 
-            onClick={toggleSidebar} 
-            className={`sidebar-toggle-button ${isSidebarOpen ? 'open' : 'closed'}`}
-            title={isSidebarOpen ? '사이드바 숨기기' : '사이드바 보이기'}
-          >
-            <div className="toggle-icon">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-          </button>
           <h3 className="logo-small">
             <span className="hoopgle-red">H</span>
             <span className="hoopgle-yellow">o</span>
@@ -923,7 +909,7 @@ const CommunityPage = ({ onGoBack }) => {
         )}
       </div>
       
-      <div className={`chat-area ${!isSidebarOpen ? 'sidebar-closed' : ''}`}>
+      <div className="chat-area">
         <div className="chat-header">
           <div className="chat-header-left">
             <h3>{activeChannel}</h3>
