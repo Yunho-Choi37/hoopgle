@@ -1097,13 +1097,33 @@
   
   /* 로그인 창 반응형 */
   .auth-container {
-    min-height: 150px;
-    padding: 15px;
+    min-height: 70px;
+    padding: 8px;
   }
   
   .auth-form {
-    padding: 20px;
-    max-width: 280px;
+    padding: 10px;
+    max-width: 100%;
+  }
+  
+  .auth-inputs-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+  
+  .auth-input-group {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .auth-buttons-group {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .auth-button {
+    flex: 1;
+    max-width: 120px;
   }
   
   .auth-title {
@@ -1511,8 +1531,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 200px;
-  padding: 20px;
+  min-height: 80px;
+  padding: 10px;
   background-color: #ffffff;
 }
 
@@ -1520,9 +1540,9 @@
   background: #ffffff;
   border: 1px solid #e1e5e9;
   border-radius: 8px;
-  padding: 24px;
+  padding: 12px;
   width: 100%;
-  max-width: 320px;
+  max-width: 600px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s ease;
 }
@@ -1533,31 +1553,47 @@
 
 .auth-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .auth-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #37352f;
-  margin: 0 0 4px 0;
+  margin: 0 0 2px 0;
   line-height: 1.2;
 }
 
 .auth-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: #787774;
   margin: 0;
   line-height: 1.4;
 }
 
+.auth-inputs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .auth-input-group {
-  margin-bottom: 12px;
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 150px;
+}
+
+.auth-buttons-group {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .auth-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   border: 1px solid #e1e5e9;
   border-radius: 6px;
   font-size: 13px;
@@ -1577,15 +1613,15 @@
 }
 
 .auth-button {
-  width: 100%;
-  padding: 8px 12px;
+  padding: 6px 12px;
   border: none;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 8px;
+  white-space: nowrap;
+  min-width: 60px;
 }
 
 .auth-button-primary {

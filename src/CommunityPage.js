@@ -581,43 +581,43 @@ const CommunityPage = ({ onGoBack }) => {
         <div className="auth-form">
           <div className="auth-header">
             <h2 className="auth-title">로그인</h2>
-            <p className="auth-subtitle">Hoop Zone에 오신 것을 환영합니다</p>
           </div>
-          <div className="auth-input-group">
-            <input
-              type="email"
-              placeholder="이메일 주소"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="auth-input"
-            />
-          </div>
-          <div className="auth-input-group">
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="auth-input"
-            />
+          <div className="auth-inputs-row">
+            <div className="auth-input-group">
+              <input
+                type="email"
+                placeholder="이메일 주소"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="auth-input"
+              />
+            </div>
+            <div className="auth-input-group">
+              <input
+                type="password"
+                placeholder="비밀번호"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="auth-input"
+              />
+            </div>
+            <div className="auth-buttons-group">
+              <button 
+                onClick={handleSignIn} 
+                disabled={loading}
+                className="auth-button auth-button-primary"
+              >
+                {loading ? '로그인 중...' : '로그인'}
+              </button>
+              <button 
+                onClick={() => setAuthView('signup')} 
+                className="auth-button auth-button-secondary"
+              >
+                회원가입
+              </button>
+            </div>
           </div>
           {authMessage && <p className="auth-error">{authMessage}</p>}
-          <button 
-            onClick={handleSignIn} 
-            disabled={loading}
-            className="auth-button auth-button-primary"
-          >
-            {loading ? '로그인 중...' : '로그인'}
-          </button>
-          <div className="auth-divider">
-            <span>또는</span>
-          </div>
-          <button 
-            onClick={() => setAuthView('signup')} 
-            className="auth-button auth-button-secondary"
-          >
-            회원가입
-          </button>
         </div>
       ) : authView === 'signup' ? (
         <SignUpPage
