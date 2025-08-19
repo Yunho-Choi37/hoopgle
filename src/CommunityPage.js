@@ -199,19 +199,46 @@ const CommunityPage = ({ onGoBack }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session?.user) {
-        const { data, error } = await supabase
+        // 1. profiles 테이블에서 사용자 정보 확인
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('username, avatar_url')
           .eq('id', session.user.id)
           .single();
 
-        if (error) {
-          setUserProfile({
-            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자',
-            avatar_url: '/default-avatar.png'
-          });
+        if (profileError) {
+          console.log('Profile not found, creating new profile...');
+          
+          // 2. profiles 테이블에 사용자 정보가 없으면 새로 생성
+          const username = session.user.user_metadata?.username || 
+                          session.user.email?.split('@')[0] || 
+                          `사용자_${session.user.id.slice(0, 8)}`;
+          
+          const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              username: username,
+              avatar_url: '/default-avatar.png',
+              email: session.user.email
+            })
+            .select('username, avatar_url')
+            .single();
+
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            // 3. 프로필 생성 실패 시 기본값 사용
+            setUserProfile({
+              username: username,
+              avatar_url: '/default-avatar.png'
+            });
+          } else {
+            console.log('Profile created successfully:', newProfile);
+            setUserProfile(newProfile);
+          }
         } else {
-          setUserProfile(data);
+          console.log('Profile found:', profileData);
+          setUserProfile(profileData);
         }
       }
     };
@@ -413,7 +440,9 @@ const CommunityPage = ({ onGoBack }) => {
       user_id: session.user.id,
       channel: activeChannel,
       profiles: userProfile || {
-        username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자',
+        username: session.user.user_metadata?.username || 
+                 session.user.email?.split('@')[0] || 
+                 `사용자_${session.user.id.slice(0, 8)}`,
         avatar_url: '/default-avatar.png'
       }
     };
@@ -582,7 +611,9 @@ const CommunityPage = ({ onGoBack }) => {
           const replyWithProfile = {
             ...savedReply,
             profiles: profileError ? {
-              username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자',
+              username: session.user.user_metadata?.username || 
+                       session.user.email?.split('@')[0] || 
+                       `사용자_${session.user.id.slice(0, 8)}`,
               avatar_url: '/default-avatar.png'
             } : profileData
           };
@@ -809,7 +840,8 @@ const CommunityPage = ({ onGoBack }) => {
             <div key={msg.id} className="message-item">
               <div className="message-content-wrapper">
                 <span className="message-author">
-                  {msg.profiles?.username || `사용자_${msg.user_id?.slice(0, 8)}`}
+                  {msg.profiles?.username || 
+                   (msg.user_id ? `사용자_${msg.user_id.slice(0, 8)}` : '알 수 없는 사용자')}
                 </span>
                 {renderMessageContent(msg.content)}
                 <div className="message-actions">
@@ -869,7 +901,8 @@ const CommunityPage = ({ onGoBack }) => {
                       <div key={reply.id} className="reply-item">
                         <div className="reply-content">
                           <span className="reply-author">
-                            {reply.profiles?.username || `사용자_${reply.user_id?.slice(0, 8)}`}
+                            {reply.profiles?.username || 
+                             (reply.user_id ? `사용자_${reply.user_id.slice(0, 8)}` : '알 수 없는 사용자')}
                           </span>
                           <div className="reply-text-wrapper">
                             <p>{reply.content}</p>
