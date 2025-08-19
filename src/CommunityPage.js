@@ -956,10 +956,11 @@ const CommunityPage = ({ onGoBack }) => {
             </li>
           </ul>
         </div>
-        
-        <div className="header-right">
-          <button onClick={onGoBack} className="back-button-community">홈으로</button>
-        </div>
+      </div>
+      
+      {/* 홈으로 버튼을 별도 영역으로 분리 */}
+      <div className="home-button-container">
+        <button onClick={onGoBack} className="back-button-community">홈으로</button>
       </div>
 
       {/* 데일리훕 카테고리 필터 */}

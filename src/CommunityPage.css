@@ -183,6 +183,34 @@
   100% { transform: rotate(360deg); }
 }
 
+/* 홈으로 버튼 컨테이너 */
+.home-button-container {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.home-button-container .back-button-community {
+  background-color: #0d2c54;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.home-button-container .back-button-community:hover {
+  background-color: #1a4a7a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 /* 카테고리 필터 */
 .category-filter {
   display: flex;
@@ -1119,6 +1147,15 @@
     align-items: center;
   }
   
+  .home-button-container {
+    padding: 6px 12px;
+  }
+  
+  .home-button-container .back-button-community {
+    padding: 6px 16px;
+    font-size: 13px;
+  }
+  
   .header-left {
     flex-shrink: 0;
     flex-direction: column;
@@ -1250,6 +1287,15 @@
     align-items: center;
   }
   
+  .home-button-container {
+    padding: 4px 8px;
+  }
+  
+  .home-button-container .back-button-community {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+  
   .header-left {
     flex-shrink: 0;
     flex-direction: column;
@@ -1262,18 +1308,7 @@
     justify-content: center;
   }
   
-  .header-right {
-    flex-shrink: 0;
-    gap: 6px;
-    min-width: fit-content;
-  }
-  
-  .back-button-community {
-    padding: 6px 10px;
-    font-size: 12px;
-    height: 28px;
-    white-space: nowrap;
-  }
+  /* header-right 제거 - 홈으로 버튼을 별도 영역으로 이동 */
   
   .profile-info-below-logo {
     gap: 4px;
@@ -1328,6 +1363,15 @@
     align-items: center;
   }
   
+  .home-button-container {
+    padding: 3px 6px;
+  }
+  
+  .home-button-container .back-button-community {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+  
   .header-left {
     flex-shrink: 0;
     flex-direction: column;
@@ -1340,18 +1384,7 @@
     justify-content: center;
   }
   
-  .header-right {
-    flex-shrink: 0;
-    gap: 4px;
-    min-width: fit-content;
-  }
-  
-  .back-button-community {
-    padding: 4px 8px;
-    font-size: 11px;
-    height: 24px;
-    white-space: nowrap;
-  }
+  /* header-right 제거 - 홈으로 버튼을 별도 영역으로 이동 */
   
   .profile-info-below-logo {
     gap: 3px;
@@ -1421,6 +1454,15 @@
     flex-direction: row;
     gap: 4px;
     align-items: center;
+  }
+  
+  .home-button-container {
+    padding: 2px 4px;
+  }
+  
+  .home-button-container .back-button-community {
+    padding: 2px 8px;
+    font-size: 10px;
   }
   
   .header-left {
@@ -1510,15 +1552,14 @@
 
 /* 극소형 화면에서 홈으로 버튼 보장 */
 @media (max-width: 200px) {
-  .header-right {
-    min-width: 40px;
+  .home-button-container {
+    padding: 1px 2px;
   }
   
-  .back-button-community {
-    padding: 1px 2px;
-    font-size: 8px;
-    height: 18px;
-    min-width: 35px;
+  .home-button-container .back-button-community {
+    padding: 1px 6px;
+    font-size: 9px;
+    min-width: 40px;
   }
 }
 
