@@ -1,12 +1,13 @@
-/* CommunityPage.css */
+/* CommunityPage.css - 새로운 레이아웃 */
 
 .community-page {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   background-color: #ffffff;
   color: #3c4043;
   font-family: arial, sans-serif;
-  overflow-x: hidden; /* Prevent horizontal scrollbar */
+  overflow-x: hidden;
 }
 
 /* Hoopdex color classes */
@@ -14,18 +15,222 @@
 .hoopgle-yellow { color: #f39c12; }
 .hoopgle-navy { color: #2c3e50; }
 
-/* Left Sidebar for Channels */
-.channels-sidebar {
+/* Top Header - 사이드바를 위로 이동 */
+.top-header {
   display: flex;
-  flex-direction: column;
-  width: 180px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
   background-color: #f8f9fa;
-  border-right: 1px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  height: 70px;
   flex-shrink: 0;
 }
 
-.channels-header, .chat-header {
-  padding: 0 12px;
+.header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logo-small {
+  white-space: nowrap;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* 수평 채널 리스트 */
+.channel-list-horizontal {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 10px;
+}
+
+.channel-item-horizontal {
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  min-width: 80px;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.channel-item-horizontal:hover {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+}
+
+.channel-item-horizontal.active {
+  background-color: #ffc107;
+  color: #0d2c54;
+  font-weight: 700;
+  border-color: #ffc107;
+}
+
+/* 프로필 정보 수평 배치 */
+.profile-info-horizontal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-name-horizontal {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0d2c54;
+}
+
+.signout-button-horizontal {
+  padding: 6px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.signout-button-horizontal:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.signout-button-horizontal:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.profile-info-below-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-name-below-logo {
+  font-weight: 500;
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.signout-button-below-logo {
+  padding: 4px 8px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  font-size: 10px;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.signout-button-below-logo:hover:not(:disabled) {
+  background-color: #e9ecef;
+}
+
+.signout-button-below-logo:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* 로딩 상태 */
+.loading-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0d2c54;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 카테고리 필터 */
+.category-filter {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 15px 20px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e1e5e9;
+  flex-shrink: 0;
+}
+
+.category-button {
+  padding: 8px 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 20px;
+  background-color: #ffffff;
+  color: #3c4043;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-button:hover {
+  background-color: #f8f9fa;
+  border-color: #d1d5db;
+}
+
+.category-button.active {
+  background-color: #ffc107;
+  color: #0d2c54;
+  border-color: #ffc107;
+  font-weight: 600;
+}
+
+/* Chat Area */
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.chat-header {
+  padding: 0 20px;
   border-bottom: 1px solid #dee2e6;
   font-size: 18px;
   font-weight: 700;
@@ -36,53 +241,6 @@
   align-items: center;
   flex-shrink: 0;
   justify-content: space-between;
-  position: relative; /* 사이드바 토글 버튼을 위한 상대 위치 */
-}
-
-.channels-header h3 {
-    white-space: nowrap;
-    margin: 0;
-    flex-grow: 1;
-    text-align: left; /* 제목을 왼쪽에 배치 */
-}
-
-.channel-list {
-  list-style: none;
-  padding: 8px 2px; /* 노션 스타일로 여백 줄임 */
-  margin: 0;
-  flex-grow: 1;
-  overflow-y: auto;
-  white-space: nowrap;
-}
-
-.channel-item {
-  padding: 8px 8px; /* 노션 스타일로 여백 줄임 */
-  margin: 2px 0; /* 노션 스타일로 여백 줄임 */
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.channel-item:hover {
-  background-color: #e9ecef;
-}
-
-.channel-item.active {
-  background-color: #ffc107;
-  color: #0d2c54;
-  font-weight: 700;
-}
-
-/* Middle Chat Area */
-.chat-area {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  min-width: 0;
 }
 
 .chat-header-left {
@@ -96,28 +254,6 @@
     font-size: 18px;
     font-weight: 700;
     margin: 0;
-}
-
-
-
-/* channels-header에 relative positioning 추가 */
-.channels-header {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #e1e5e9;
-  background-color: #ffffff;
-}
-
-/* Hoop Zone 제목 중앙 정렬 */
-.channels-header h3.logo-small {
-  text-align: center;
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
 }
 
 /* 노션 스타일 홈으로 버튼 */
@@ -433,117 +569,6 @@
   font-style: italic;
 }
 
-.login-prompt {
-  width: 100%;
-  text-align: center;
-}
-
-.login-prompt p {
-  margin: 0 0 10px;
-  color: #5f6368;
-}
-
-.kakao-login-button-small {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.kakao-login-button-small img {
-  display: block;
-  width: 150px;
-}
-
-.login-prompt h3 {
-  margin-bottom: 15px;
-  font-size: 16px;
-  color: #333;
-}
-
-.login-prompt input {
-  display: block;
-  width: calc(100% - 24px);
-  padding: 12px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.login-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.login-buttons button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #ffc107;
-  color: #0d2c54;
-  font-weight: 600;
-}
-
-.login-buttons button:disabled {
-  background-color: #e9ecef;
-  cursor: not-allowed;
-}
-
-.profile-section {
-  padding: 20px;
-  border-top: 1px solid #dee2e6;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.profile-info {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.profile-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.profile-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #0d2c54;
-  flex: 1;
-  line-height: 1.4;
-}
-
-.signout-button {
-  padding: 6px 12px;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  background-color: #f8f9fa;
-  cursor: pointer;
-  font-size: 12px;
-  transition: background-color 0.2s ease;
-  white-space: nowrap;
-  min-width: fit-content;
-  line-height: 1.2;
-}
-
-.signout-button:hover:not(:disabled) {
-  background-color: #e9ecef;
-}
-
-.signout-button:disabled {
-  background-color: #e9ecef;
-  cursor: not-allowed;
-}
-
 /* 링크 임베드 스타일 */
 .link-embed {
   margin: 8px 0;
@@ -574,6 +599,32 @@
 }
 
 .youtube-thumbnail:hover img {
+  transform: scale(1.02);
+}
+
+.instagram-embed {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.instagram-thumbnail {
+  position: relative;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.instagram-thumbnail img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+
+.instagram-thumbnail:hover img {
   transform: scale(1.02);
 }
 
@@ -639,554 +690,6 @@
   margin: 8px 0;
   line-height: 1.5;
   color: #333;
-}
-
-/* 웹사이트 카드 스타일 */
-.website-card {
-  background: #ffffff;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.website-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-color: #d1d5db;
-}
-
-.website-card-link {
-  display: flex;
-  text-decoration: none;
-  color: inherit;
-  padding: 12px;
-}
-
-.website-card-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.website-card-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1a73e8;
-  margin: 0;
-  line-height: 1.3;
-}
-
-.website-card-description {
-  font-size: 12px;
-  color: #5f6368;
-  margin: 0;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.website-card-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: auto;
-}
-
-.website-card-site {
-  font-size: 11px;
-  color: #1a73e8;
-  font-weight: 500;
-}
-
-.website-card-url {
-  font-size: 10px;
-  color: #9aa0a6;
-}
-
-/* 로딩 스켈레톤 */
-.card-skeleton {
-  display: flex;
-  padding: 12px;
-  gap: 12px;
-}
-
-.skeleton-content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.skeleton-title {
-  height: 16px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 2px;
-  width: 80%;
-}
-
-.skeleton-description {
-  height: 12px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 2px;
-  width: 60%;
-}
-
-.skeleton-url {
-  height: 10px;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: loading 1.5s infinite;
-  border-radius: 2px;
-  width: 40%;
-}
-
-@keyframes loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* 모바일 반응형 */
-/* 반응형 디자인 개선 */
-@media (max-width: 1200px) {
-  .channels-sidebar {
-    width: 160px;
-  }
-  
-  .channels-sidebar.closed {
-    margin-left: -160px;
-  }
-  
-  .channels-header h3.logo-small {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .community-page {
-    flex-direction: row;
-    height: 100vh;
-    overflow: hidden;
-  }
-  
-  .channels-sidebar {
-    width: 140px;
-    height: 100vh;
-    border-right: 1px solid #dee2e6;
-    flex-shrink: 0;
-  }
-  
-  .channels-sidebar.closed {
-    margin-left: -140px;
-  }
-  
-  .channels-header h3.logo-small {
-    font-size: 18px;
-  }
-  
-  .chat-area {
-    flex: 1;
-    min-width: 0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .messages-list {
-    padding: 15px;
-    flex: 1;
-    overflow-y: auto;
-    max-height: calc(100vh - 120px);
-  }
-  
-  .chat-input-box {
-    padding: 10px;
-    background: white;
-    border-top: 1px solid #dee2e6;
-    flex-shrink: 0;
-  }
-  
-  .input-container {
-    flex-direction: row;
-    gap: 8px;
-  }
-  
-  .input-container input {
-    font-size: 14px;
-    padding: 10px;
-    flex: 1;
-  }
-  
-  .chat-input-box button {
-    padding: 8px 12px;
-    font-size: 14px;
-    white-space: nowrap;
-  }
-  
-  /* 모바일에서 프로필 섹션 최적화 */
-  .profile-section {
-    padding: 12px 10px;
-    min-height: auto;
-  }
-  
-  .profile-info {
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: nowrap;
-    min-width: 0;
-  }
-  
-  .profile-name {
-    font-size: 12px;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .signout-button {
-    padding: 4px 8px;
-    font-size: 11px;
-    white-space: nowrap;
-    min-width: auto;
-    flex-shrink: 0;
-  }
-  
-
-  
-  .message-item {
-    margin-bottom: 12px;
-  }
-  
-  .message-item p {
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-  
-  .message-author {
-    font-size: 12px;
-  }
-  
-  .message-timestamp {
-    font-size: 10px;
-  }
-  
-  /* 댓글 창 반응형 스타일 */
-  .reply-input-container {
-    padding: 10px;
-    gap: 8px;
-  }
-  
-  .reply-input-container .reply-input-wrapper {
-    flex-direction: row;
-    gap: 6px;
-  }
-  
-  .reply-input-container input {
-    min-width: 100px;
-    padding: 8px 10px;
-    font-size: 12px;
-    flex: 1;
-  }
-  
-  .reply-input-container button {
-    padding: 8px 10px;
-    font-size: 12px;
-    min-width: 50px;
-    white-space: nowrap;
-  }
-  
-  .replies-container {
-    padding-left: 10px;
-    margin-left: 5px;
-  }
-  
-  .reply-item {
-    padding: 8px;
-  }
-  
-  .reply-author {
-    font-size: 10px;
-    min-width: 50px;
-    padding: 2px 4px;
-  }
-  
-  .reply-text-wrapper p {
-    font-size: 12px;
-    padding: 4px 8px;
-  }
-  
-  .reply-timestamp {
-    font-size: 9px;
-  }
-  
-  /* 링크 카드 반응형 */
-  .link-card {
-    margin: 8px 0;
-  }
-  
-  .link-card-link {
-    flex-direction: row;
-  }
-  
-  .link-card-image {
-    width: 120px;
-    height: 90px;
-  }
-  
-  .link-card-content {
-    padding: 10px;
-  }
-  
-  .link-card-title {
-    font-size: 13px;
-  }
-  
-  .link-card-description {
-    font-size: 11px;
-  }
-  
-  /* 로그인 창 반응형 */
-  .auth-container {
-    min-height: 70px;
-    padding: 8px;
-  }
-  
-  .auth-form {
-    padding: 10px;
-    max-width: 100%;
-  }
-  
-  .auth-inputs-row {
-    flex-direction: column;
-    gap: 6px;
-  }
-  
-  .auth-input-group {
-    min-width: auto;
-    width: 100%;
-  }
-  
-  .auth-buttons-group {
-    width: 100%;
-    justify-content: flex-end;
-  }
-  
-  .auth-button {
-    flex: 1;
-    max-width: 120px;
-  }
-  
-  .auth-title {
-    font-size: 16px;
-  }
-  
-  .auth-subtitle {
-    font-size: 11px;
-  }
-}
-
-@media (max-width: 480px) {
-  .community-page {
-    flex-direction: row;
-    height: 100vh;
-  }
-  
-  .channels-sidebar {
-    width: 120px;
-    height: 100vh;
-  }
-  
-
-  
-  .channels-header h3.logo-small {
-    font-size: 16px;
-  }
-  
-  /* 모바일에서 프로필 섹션 최적화 */
-  .profile-section {
-    padding: 8px;
-    min-height: auto;
-  }
-  
-  .profile-info {
-    flex-direction: row;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: nowrap;
-    min-width: 0;
-  }
-  
-  .profile-name {
-    font-size: 11px;
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .signout-button {
-    padding: 3px 6px;
-    font-size: 10px;
-    white-space: nowrap;
-    min-width: auto;
-    flex-shrink: 0;
-  }
-  
-
-  
-  .messages-list {
-    padding: 10px;
-  }
-  
-  .chat-input-box {
-    padding: 8px;
-  }
-  
-  .input-container input {
-    font-size: 13px;
-    padding: 8px;
-  }
-  
-  .chat-input-box button {
-    padding: 6px 10px;
-    font-size: 13px;
-  }
-  
-  .message-item {
-    margin-bottom: 12px;
-  }
-  
-  .message-item p {
-    font-size: 13px;
-    padding: 6px 10px;
-  }
-  
-  .message-author {
-    font-size: 12px;
-  }
-  
-  .message-timestamp {
-    font-size: 10px;
-  }
-  
-  /* 댓글 창 반응형 스타일 */
-  .reply-input-container {
-    padding: 8px;
-  }
-  
-  .reply-input-container .reply-input-wrapper {
-    flex-direction: row;
-    gap: 6px;
-  }
-  
-  .reply-input-container input {
-    min-width: 100px;
-    padding: 6px 8px;
-    font-size: 12px;
-    flex: 1;
-  }
-  
-  .reply-input-container button {
-    padding: 6px 8px;
-    font-size: 11px;
-  }
-}
-
-/* 운영자 전용 메시지 */
-.admin-only-message {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background-color: #f8f9fa;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  margin: 8px 0;
-}
-
-.admin-only-message p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-}
-
-/* 입력 컨테이너 스타일 */
-.input-container {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.input-container input {
-  width: 100%;
-  padding: 12px 60px 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: white;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.input-container input:focus {
-  outline: none;
-  border-color: #ffc107;
-  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
-}
-
-.character-count {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-  color: #6c757d;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 2px 6px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.character-count.reply-char-count {
-  font-size: 11px;
-  right: 8px;
-  padding: 1px 4px;
-}
-
-/* 댓글 입력 래퍼 스타일 */
-.reply-input-wrapper {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.reply-input-wrapper input {
-  width: 100%;
-  padding: 12px 50px 12px 16px;
-  border: 2px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px;
-  background-color: white;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.reply-input-wrapper input:focus {
-  outline: none;
-  border-color: #ffc107;
-  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
 }
 
 /* 링크 카드 스타일 */
@@ -1274,7 +777,7 @@
   word-break: break-all;
 }
 
-/* 로딩 상태 */
+/* 로딩 스켈레톤 */
 .link-card.loading .link-card-skeleton {
   display: flex;
   padding: 12px;
@@ -1349,6 +852,93 @@
 
 .link-card.error .link-url:hover {
   text-decoration: underline;
+}
+
+/* 운영자 전용 메시지 */
+.admin-only-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.admin-only-message p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* 입력 컨테이너 스타일 */
+.input-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 12px 60px 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-container input:focus {
+  outline: none;
+  border-color: #ffc107;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
+}
+
+.character-count {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: #6c757d;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.character-count.reply-char-count {
+  font-size: 11px;
+  right: 8px;
+  padding: 1px 4px;
+}
+
+/* 댓글 입력 래퍼 스타일 */
+.reply-input-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.reply-input-wrapper input {
+  width: 100%;
+  padding: 12px 50px 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reply-input-wrapper input:focus {
+  outline: none;
+  border-color: #ffc107;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.2);
 }
 
 /* 노션 스타일 로그인 창 */
@@ -1515,64 +1105,380 @@
   border-radius: 4px;
 }
 
-/* 기존 로그인 스타일과 호환성을 위한 유지 */
-.login-prompt {
-  width: 100%;
-  text-align: center;
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .top-header {
+    height: auto;
+    min-height: 60px;
+    padding: 8px 10px;
+    flex-direction: row;
+    gap: 10px;
+    align-items: center;
+  }
+  
+  .header-left {
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .header-center {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .header-right {
+    flex-shrink: 0;
+    gap: 8px;
+  }
+  
+  .profile-info-below-logo {
+    gap: 6px;
+  }
+  
+  .profile-name-below-logo {
+    font-size: 11px;
+  }
+  
+  .signout-button-below-logo {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+  
+  .header-right {
+    gap: 10px;
+  }
+  
+  .logo-small {
+    font-size: 18px;
+  }
+  
+  .channel-list-horizontal {
+    gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  
+  .channel-item-horizontal {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 60px;
+    text-align: center;
+    border-radius: 16px;
+    white-space: nowrap;
+  }
+  
+  .category-filter {
+    padding: 10px;
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+  
+  .category-button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .chat-area {
+    flex: 1;
+    min-width: 0;
+    height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .messages-list {
+    padding: 15px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 140px);
+  }
+  
+  .chat-input-box {
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #dee2e6;
+    flex-shrink: 0;
+  }
+  
+  .input-container {
+    flex-direction: row;
+    gap: 8px;
+  }
+  
+  .input-container input {
+    font-size: 14px;
+    padding: 10px;
+    flex: 1;
+  }
+  
+  .chat-input-box button {
+    padding: 8px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  
+  .profile-info-horizontal {
+    gap: 5px;
+  }
+  
+  .profile-name-horizontal {
+    font-size: 11px;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .signout-button-horizontal {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
 }
 
-.login-prompt p {
-  margin: 0 0 10px;
-  color: #5f6368;
+@media (max-width: 480px) {
+  .top-header {
+    height: auto;
+    min-height: 50px;
+    padding: 6px 8px;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  .header-left {
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+  }
+  
+  .header-center {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .header-right {
+    flex-shrink: 0;
+    gap: 6px;
+  }
+  
+  .profile-info-below-logo {
+    gap: 4px;
+  }
+  
+  .profile-name-below-logo {
+    font-size: 10px;
+  }
+  
+  .signout-button-below-logo {
+    padding: 2px 4px;
+    font-size: 8px;
+  }
+  
+  .logo-small {
+    font-size: 16px;
+  }
+  
+  .channel-list-horizontal {
+    gap: 4px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  
+  .channel-item-horizontal {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: 50px;
+    text-align: center;
+    border-radius: 14px;
+    white-space: nowrap;
+  }
+  
+  .category-filter {
+    padding: 8px 5px;
+    gap: 3px;
+  }
+  
+  .category-button {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
 }
 
-.kakao-login-button-small {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0;
+@media (max-width: 320px) {
+  .top-header {
+    height: auto;
+    min-height: 45px;
+    padding: 4px 6px;
+    flex-direction: row;
+    gap: 6px;
+    align-items: center;
+  }
+  
+  .header-left {
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .header-center {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .header-right {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+  
+  .profile-info-below-logo {
+    gap: 3px;
+  }
+  
+  .profile-name-below-logo {
+    font-size: 9px;
+  }
+  
+  .signout-button-below-logo {
+    padding: 2px 3px;
+    font-size: 7px;
+  }
+  
+  .logo-small {
+    font-size: 14px;
+  }
+  
+  .channel-list-horizontal {
+    gap: 3px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  
+  .channel-item-horizontal {
+    padding: 3px 6px;
+    font-size: 10px;
+    min-width: 40px;
+    text-align: center;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+  
+  .category-filter {
+    padding: 6px 4px;
+    gap: 4px;
+  }
+  
+  .category-button {
+    padding: 4px 6px;
+    font-size: 10px;
+  }
+  
+  .profile-info-horizontal {
+    gap: 3px;
+  }
+  
+  .profile-name-horizontal {
+    font-size: 9px;
+    max-width: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .signout-button-horizontal {
+    padding: 3px 4px;
+    font-size: 9px;
+  }
 }
 
-.kakao-login-button-small img {
-  display: block;
-  width: 150px;
-}
-
-.login-prompt h3 {
-  margin-bottom: 15px;
-  font-size: 16px;
-  color: #333;
-}
-
-.login-prompt input {
-  display: block;
-  width: calc(100% - 24px);
-  padding: 12px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.login-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.login-buttons button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  background-color: #ffc107;
-  color: #0d2c54;
-  font-weight: 600;
-}
-
-.login-buttons button:disabled {
-  background-color: #e9ecef;
-  cursor: not-allowed;
+@media (max-width: 240px) {
+  .top-header {
+    height: auto;
+    min-height: 40px;
+    padding: 3px 4px;
+    flex-direction: row;
+    gap: 4px;
+    align-items: center;
+  }
+  
+  .header-left {
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  
+  .header-center {
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .header-right {
+    flex-shrink: 0;
+    gap: 3px;
+  }
+  
+  .profile-info-below-logo {
+    gap: 2px;
+  }
+  
+  .profile-name-below-logo {
+    font-size: 8px;
+  }
+  
+  .signout-button-below-logo {
+    padding: 1px 2px;
+    font-size: 6px;
+  }
+  
+  .logo-small {
+    font-size: 12px;
+  }
+  
+  .channel-list-horizontal {
+    gap: 2px;
+    flex-wrap: nowrap;
+    justify-content: center;
+  }
+  
+  .channel-item-horizontal {
+    padding: 2px 4px;
+    font-size: 9px;
+    min-width: 30px;
+    text-align: center;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  
+  .category-filter {
+    padding: 4px 2px;
+    gap: 2px;
+  }
+  
+  .category-button {
+    padding: 2px 4px;
+    font-size: 8px;
+  }
+  
+  .profile-info-horizontal {
+    gap: 2px;
+  }
+  
+  .profile-name-horizontal {
+    font-size: 8px;
+    max-width: 30px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .signout-button-horizontal {
+    padding: 2px 3px;
+    font-size: 8px;
+  }
 }
 
 
