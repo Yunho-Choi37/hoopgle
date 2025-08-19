@@ -633,7 +633,45 @@
   transform: scale(1.02);
 }
 
-/* Instagram 관련 스타일 제거 */
+/* 사이트 썸네일 스타일 */
+.site-embed {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  padding: 12px;
+  border-radius: 8px;
+  margin: 8px 0;
+}
+
+.site-thumbnail {
+  position: relative;
+  cursor: pointer;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.site-thumbnail img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+  object-fit: cover;
+}
+
+.site-thumbnail:hover img {
+  transform: scale(1.02);
+}
+
+.fallback-link {
+  padding: 12px;
+  background-color: #e9ecef;
+  border-radius: 8px;
+  text-align: center;
+  color: #6c757d;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
 
 .youtube-play-button {
   position: absolute;
@@ -703,10 +741,10 @@
 .link-card {
   margin: 12px 0;
   border: 1px solid #e1e5e9;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
 
@@ -733,6 +771,43 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.link-card-image-large {
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.link-card-image-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.link-card-image-large:hover img {
+  transform: scale(1.05);
+}
+
+/* YouTube가 아닌 사이트용 작은 썸네일 */
+.link-card-image-small {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  border-radius: 8px 8px 0 0;
+}
+
+.link-card-image-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.link-card-image-small:hover img {
+  transform: scale(1.05);
 }
 
 .link-card-content {

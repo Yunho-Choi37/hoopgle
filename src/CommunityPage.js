@@ -96,45 +96,61 @@ const CommunityPage = ({ onGoBack }) => {
     return videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
   };
 
+  // 모든 사이트의 썸네일을 가져오는 함수
+  const getSiteThumbnail = (url) => {
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.replace('www.', '');
+      
+      // YouTube는 기존 함수 사용
+      if (isYouTubeLink(url)) {
+        return getYouTubeThumbnail(url);
+      }
+      
+      // 다른 사이트들은 메타데이터에서 이미지 가져오기
+      return null; // 메타데이터에서 처리
+    } catch (error) {
+      console.error('Error generating site thumbnail:', error);
+      return null;
+    }
+  };
+
   // Instagram 관련 함수들 제거
 
   // toggleVideoExpansion 함수 제거 - 더 이상 사용하지 않음
 
-  // 링크 메타데이터 가져오기
+  // 카카오톡 방식으로 Open Graph 메타데이터를 가져오는 함수
+  const getOpenGraphData = async (url) => {
+    try {
+      // Microlink API를 사용하여 Open Graph 메타데이터 가져오기
+      const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&meta=true&embed=meta`);
+      const data = await response.json();
+      
+      if (data.status === 'success' && data.data.meta) {
+        const meta = data.data.meta;
+        return {
+          title: meta.title || meta['og:title'] || '',
+          description: meta.description || meta['og:description'] || '',
+          image: meta.image?.url || meta['og:image'] || '',
+          site: meta.publisher || meta['og:site_name'] || ''
+        };
+      }
+    } catch (error) {
+      console.error('Error fetching Open Graph data:', error);
+    }
+    return null;
+  };
+
+  // 링크 메타데이터 가져오기 (기본값)
   const fetchLinkMetadata = async (url) => {
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.replace('www.', '');
       
-      // 일반적인 사이트별 제목 생성
-      let title = url;
-      let description = `${hostname}에서 제공하는 콘텐츠입니다.`;
-      
-      // 특정 사이트에 대한 커스텀 처리
-      if (hostname.includes('github.com')) {
-        title = 'GitHub 저장소';
-        description = 'GitHub에서 호스팅되는 프로젝트나 저장소입니다.';
-      } else if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
-        title = 'YouTube 동영상';
-        description = 'YouTube 동영상 링크입니다.';
-      } else if (hostname.includes('instagram.com') || hostname.includes('instagr.am')) {
-        title = 'Instagram 포스트';
-        description = 'Instagram에서 공유된 포스트입니다.';
-      } else if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
-        title = 'Twitter/X 포스트';
-        description = 'Twitter/X에서 공유된 포스트입니다.';
-      } else if (hostname.includes('facebook.com')) {
-        title = 'Facebook 포스트';
-        description = 'Facebook에서 공유된 포스트입니다.';
-      } else if (hostname.includes('linkedin.com')) {
-        title = 'LinkedIn 포스트';
-        description = 'LinkedIn에서 공유된 포스트입니다.';
-      }
-      
       return {
-        title: title,
-        description: description,
-        image: '',
+        title: url,
+        description: `${hostname}에서 제공하는 콘텐츠입니다.`,
+        image: `https://www.google.com/s2/favicons?domain=${hostname}&sz=128`,
         site_name: hostname,
         url: url
       };
@@ -356,9 +372,11 @@ const CommunityPage = ({ onGoBack }) => {
       const hasMatchingLink = links.some(link => {
         switch (activeCategory) {
           case 'YouTube':
+            // YouTube 링크만 표시
             return isYouTubeLink(link);
           case 'News':
-            return isNewsLink(link);
+            // YouTube가 아닌 모든 링크 표시
+            return !isYouTubeLink(link);
           default:
             return true;
         }
@@ -662,6 +680,7 @@ const CommunityPage = ({ onGoBack }) => {
       processedContent = processedContent.replace(link, `[${linkId}]`);
       
       if (isYouTubeLink(link)) {
+        // YouTube는 기존 방식으로 크게 표시
         const thumbnailUrl = getYouTubeThumbnail(link);
         if (thumbnailUrl) {
           embeds.push(
@@ -676,6 +695,7 @@ const CommunityPage = ({ onGoBack }) => {
           );
         }
       } else {
+        // 다른 사이트들은 메타데이터를 사용하여 썸네일 표시
         embeds.push(
           <LinkCard key={linkId} url={link} />
         );
@@ -695,6 +715,7 @@ const CommunityPage = ({ onGoBack }) => {
     const [metadata, setMetadata] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [ogData, setOgData] = useState(null);
 
     useEffect(() => {
       const loadMetadata = async () => {
@@ -702,6 +723,12 @@ const CommunityPage = ({ onGoBack }) => {
           setLoading(true);
           const meta = await loadLinkMetadata(url);
           setMetadata(meta);
+          
+          // YouTube가 아닌 경우 Open Graph 데이터 가져오기
+          if (!isYouTubeLink(url)) {
+            const og = await getOpenGraphData(url);
+            setOgData(og);
+          }
         } catch (error) {
           console.error('Error loading link metadata:', error);
           setError(true);
@@ -741,18 +768,22 @@ const CommunityPage = ({ onGoBack }) => {
     return (
       <div className="link-card">
         <a href={url} target="_blank" rel="noopener noreferrer" className="link-card-link">
-          {metadata.image && (
-            <div className="link-card-image">
-              <img src={metadata.image} alt={metadata.title} />
+          {(ogData?.image || metadata.image) && (
+            <div className={isYouTubeLink(url) ? "link-card-image-large" : "link-card-image-small"}>
+              <img src={ogData?.image || metadata.image} alt={ogData?.title || metadata.title} onError={(e) => {
+                // 이미지 로드 실패 시 기본 링크로 대체
+                e.target.style.display = 'none';
+                e.target.parentElement.innerHTML = `<div class="fallback-link">🔗 ${url}</div>`;
+              }} />
             </div>
           )}
           <div className="link-card-content">
-            <div className="link-card-title">{metadata.title}</div>
-            {metadata.description && (
-              <div className="link-card-description">{metadata.description}</div>
+            <div className="link-card-title">{ogData?.title || metadata.title}</div>
+            {(ogData?.description || metadata.description) && (
+              <div className="link-card-description">{ogData?.description || metadata.description}</div>
             )}
             <div className="link-card-meta">
-              <span className="link-card-site">{metadata.site_name}</span>
+              <span className="link-card-site">{ogData?.site || metadata.site_name}</span>
               <span className="link-card-url">{url}</span>
             </div>
           </div>
