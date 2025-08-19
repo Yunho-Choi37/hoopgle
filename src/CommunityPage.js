@@ -67,18 +67,21 @@ const CommunityPage = ({ onGoBack }) => {
     return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
-  const isInstagramLink = (url) => {
-    return url.includes('instagram.com') || url.includes('instagr.am');
-  };
+  // Instagram 관련 함수 제거
 
   const isNewsLink = (url) => {
     const newsDomains = [
       'naver.com', 'daum.net', 'google.com', 'yahoo.com', 
       'chosun.com', 'joongang.co.kr', 'donga.com', 'hankyung.com',
       'mk.co.kr', 'etnews.com', 'zdnet.co.kr', 'itworld.co.kr',
-      'basketball.or.kr', 'kssbf.or.kr', 'koreabasketball.or.kr'
+      'basketball.or.kr', 'kssbf.or.kr', 'koreabasketball.or.kr',
+      'sports.news.naver.com', 'news.naver.com', 'sports.daum.net',
+      'news.daum.net', 'sportskhan.co.kr', 'sportsworldi.com',
+      'sportalkorea.com', 'basketball.or.kr', 'kbl.or.kr', 'wkbl.or.kr'
     ];
-    return newsDomains.some(domain => url.includes(domain));
+    const isNews = newsDomains.some(domain => url.includes(domain));
+    console.log('News link check:', url, 'isNews:', isNews);
+    return isNews;
   };
 
   // getYouTubeEmbedUrl 함수 제거 - 더 이상 사용하지 않음
@@ -93,44 +96,7 @@ const CommunityPage = ({ onGoBack }) => {
     return videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
   };
 
-  const getInstagramThumbnail = (url) => {
-    // Instagram URL에서 post ID 추출
-    let postId = '';
-    if (url.includes('instagram.com/p/')) {
-      postId = url.split('instagram.com/p/')[1].split('/')[0];
-    } else if (url.includes('instagram.com/reel/')) {
-      postId = url.split('instagram.com/reel/')[1].split('/')[0];
-    }
-    
-    if (postId) {
-      // Instagram의 oEmbed API를 통해 썸네일 가져오기 시도
-      // 실제로는 Instagram API 제한으로 인해 기본 이미지 사용
-      return `https://www.instagram.com/p/${postId}/media/?size=l`;
-    }
-    return null;
-  };
-
-  // Instagram 썸네일 로드 시 에러 처리
-  const handleInstagramImageError = (event) => {
-    // 이미지 로드 실패 시 기본 Instagram 아이콘으로 대체
-    event.target.style.display = 'none';
-    const container = event.target.parentElement;
-    container.innerHTML = `
-      <div style="
-        width: 100%; 
-        height: 200px; 
-        background: linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%);
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        border-radius: 8px;
-        color: white;
-        font-size: 24px;
-      ">
-        📷 Instagram
-      </div>
-    `;
-  };
+  // Instagram 관련 함수들 제거
 
   // toggleVideoExpansion 함수 제거 - 더 이상 사용하지 않음
 
@@ -375,22 +341,31 @@ const CommunityPage = ({ onGoBack }) => {
       return messages;
     }
 
+    console.log('Filtering messages for category:', activeCategory);
+    
     return messages.filter(message => {
       const links = detectLinks(message.content);
-      if (links.length === 0) return false;
+      console.log('Message links:', links);
+      
+      // 링크가 없는 메시지는 모든 카테고리에서 보이도록 함
+      if (links.length === 0) {
+        console.log('No links found, showing message');
+        return true;
+      }
 
-      return links.some(link => {
+      const hasMatchingLink = links.some(link => {
         switch (activeCategory) {
           case 'YouTube':
             return isYouTubeLink(link);
-          case 'Instagram':
-            return isInstagramLink(link);
           case 'News':
             return isNewsLink(link);
           default:
             return true;
         }
       });
+      
+      console.log('Message has matching link:', hasMatchingLink);
+      return hasMatchingLink;
     });
   };
 
@@ -700,29 +675,6 @@ const CommunityPage = ({ onGoBack }) => {
             </div>
           );
         }
-      } else if (isInstagramLink(link)) {
-        const thumbnailUrl = getInstagramThumbnail(link);
-        if (thumbnailUrl) {
-          embeds.push(
-            <div key={linkId} className="link-embed instagram-embed">
-              <a href={link} target="_blank" rel="noopener noreferrer" className="instagram-thumbnail">
-                <img 
-                  src={thumbnailUrl} 
-                  alt="Instagram thumbnail" 
-                  onError={handleInstagramImageError}
-                />
-              </a>
-              <a href={link} target="_blank" rel="noopener noreferrer" className="link-url">
-                {link}
-              </a>
-            </div>
-          );
-        } else {
-          // 썸네일을 가져올 수 없는 경우 기본 링크 카드 사용
-          embeds.push(
-            <LinkCard key={linkId} url={link} />
-          );
-        }
       } else {
         embeds.push(
           <LinkCard key={linkId} url={link} />
@@ -977,12 +929,6 @@ const CommunityPage = ({ onGoBack }) => {
             onClick={() => setActiveCategory('YouTube')}
           >
             🎥 YouTube
-          </button>
-          <button 
-            className={`category-button ${activeCategory === 'Instagram' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('Instagram')}
-          >
-            📷 Instagram
           </button>
           <button 
             className={`category-button ${activeCategory === 'News' ? 'active' : ''}`}

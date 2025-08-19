@@ -633,31 +633,7 @@
   transform: scale(1.02);
 }
 
-.instagram-embed {
-  background-color: #f8f9fa;
-  border: 1px solid #e9ecef;
-  padding: 12px;
-  border-radius: 8px;
-}
-
-.instagram-thumbnail {
-  position: relative;
-  cursor: pointer;
-  border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 8px;
-}
-
-.instagram-thumbnail img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-  transition: transform 0.2s ease;
-}
-
-.instagram-thumbnail:hover img {
-  transform: scale(1.02);
-}
+/* Instagram 관련 스타일 제거 */
 
 .youtube-play-button {
   position: absolute;
