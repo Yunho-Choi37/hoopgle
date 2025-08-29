@@ -232,55 +232,64 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
           className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
         >
-          AVG 득점
+          <span className="desktop-text">AVG 득점</span>
+          <span className="mobile-text">평득</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'avgAssists' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgAssists'); setSearchTerm(''); }}
         >
-          AVG 어시스트
+          <span className="desktop-text">AVG 어시스트</span>
+          <span className="mobile-text">평어</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'avgRebounds' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgRebounds'); setSearchTerm(''); }}
         >
-          AVG 리바운드
+          <span className="desktop-text">AVG 리바운드</span>
+          <span className="mobile-text">평리</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'avgSteals' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgSteals'); setSearchTerm(''); }}
         >
-          AVG 스틸
+          <span className="desktop-text">AVG 스틸</span>
+          <span className="mobile-text">평스</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalBlocks' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalBlocks'); setSearchTerm(''); }}
         >
-          블록슛
+          <span className="desktop-text">블록슛</span>
+          <span className="mobile-text">블</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalPoints'); setSearchTerm(''); }}
         >
-          총득점
+          <span className="desktop-text">총득점</span>
+          <span className="mobile-text">총득</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalAssists' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalAssists'); setSearchTerm(''); }}
         >
-          총 어시스트
+          <span className="desktop-text">총 어시스트</span>
+          <span className="mobile-text">총어</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalRebounds' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalRebounds'); setSearchTerm(''); }}
         >
-          총 리바운드
+          <span className="desktop-text">총 리바운드</span>
+          <span className="mobile-text">총리</span>
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalSteals' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalSteals'); setSearchTerm(''); }}
         >
-          총 스틸
+          <span className="desktop-text">총 스틸</span>
+          <span className="mobile-text">총스</span>
         </button>
       </div>
 
