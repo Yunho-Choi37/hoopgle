@@ -253,6 +253,46 @@ table {
   color: #191970; /* 남색으로 변경 */
 }
 
+/* Mobile styles for average stats circles */
+@media (max-width: 768px) {
+  .player-avg-stats-container {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .avg-stat-item-circle {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .avg-stat-item-circle .label {
+    font-size: 10px;
+  }
+  
+  .avg-stat-item-circle .value {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-avg-stats-container {
+    gap: 8px;
+  }
+  
+  .avg-stat-item-circle {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .avg-stat-item-circle .label {
+    font-size: 9px;
+  }
+  
+  .avg-stat-item-circle .value {
+    font-size: 12px;
+  }
+}
+
 thead {
   background-color: #fff; /* Remove background */
   color: #80868b; /* Lighter text for header */
@@ -542,10 +582,11 @@ tbody tr:hover {
   border: 1px solid #ccc;
   border-radius: 5px;
   overflow: hidden;
+  flex-wrap: nowrap;
 }
 
 .type-tab-button {
-  flex-grow: 1;
+  flex: 1;
   padding: 8px 15px;
   font-size: 14px;
   text-align: center;
@@ -554,6 +595,8 @@ tbody tr:hover {
   color: #333;
   border: none;
   transition: background-color 0.3s, color 0.3s;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .type-tab-button:not(:last-child) {
@@ -563,6 +606,50 @@ tbody tr:hover {
 .type-tab-button.active {
   background-color: #4285F4;
   color: #fff;
+}
+
+/* Mobile styles for ranking type tabs */
+@media (max-width: 768px) {
+  .ranking-type-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .type-tab-button {
+    flex-shrink: 0;
+    padding: 4px 6px;
+    font-size: 10px;
+    min-width: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .type-tab-button {
+    padding: 3px 4px;
+    font-size: 9px;
+    min-width: 40px;
+  }
+}
+
+/* Desktop and mobile text visibility */
+.desktop-text {
+  display: inline;
+}
+
+.mobile-text {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-text {
+    display: none;
+  }
+  
+  .mobile-text {
+    display: inline;
+  }
 }
 
 /* High School Sub-tabs (similar to middle school sub-tabs) */
