@@ -989,158 +989,160 @@ function App() {
   // Search Results View
   if (showResults) {
     return (
-      <div className="App">
-        <div className="results-header">
-          <button className="back-button" onClick={handleGoHome}>
-            <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16px" height="16px">
-              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
-            </svg>
-          </button>
-          <h1 className="logo-small" onClick={handleGoHome}>
-            <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
-          </h1>
-          <form onSubmit={handleSearch} className="search-form-results">
-            <input
-              type="text"
-              placeholder="선수명 또는 학교명 검색..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <button type="submit">검색</button>
-          </form>
-        </div>
+      <div className="app-container results-mode">
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
+          <div className="results-header">
+            <button className="back-button" onClick={handleGoHome}>
+              <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16px" height="16px">
+                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+              </svg>
+            </button>
+            <h1 className="logo-small" onClick={handleGoHome}>
+              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
+            </h1>
+            <form onSubmit={handleSearch} className="search-form-results">
+              <input
+                type="text"
+                placeholder="선수명 또는 학교명 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button type="submit">검색</button>
+            </form>
+          </div>
 
-        <div className="results-container">
-          {needsSelection && (
-            <div className="selection-container">
-              <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
-              <div className="selection-list">
-                {uniquePlayers.map((player, index) => (
-                  <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
-                    <span className="player-name">{player.name}</span>
-                    <span className="player-info">{player.team} | no.{player.jersey}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {!needsSelection && displayRecords.length === 0 && (
-            <div className="no-results">
-              <p>검색 결과가 없습니다.</p>
-            </div>
-          )}
-
-          {displayRecords.length > 0 && (
-            <>
-              <div className="player-header">
-                <h2>
-                  {displayRecords[0]['선수명']}
-                  <span className="player-sub-info"> {displayRecords[0]['소속팀']} | no.{displayRecords[0]['등번호']}</span>
-                  {isHotPlayer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="flame-emoji" title="Hot Player (평균 득점 Top 5)"> 🔥</span>}
-                  {isDimeDealer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="dime-dealer-emoji" title="Dime Dealer (평균 어시스트 Top 5)"> 🏀</span>}
-                  {isSkySweeper(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="sky-sweeper-emoji" title="Sky Sweeper (평균 리바운드 Top 5)"> 🖐️</span>}
-                  {isStealMaster(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="steal-emoji" title="Steal Master (평균 스틸 Top 5)"> 🥷</span>}
-                </h2>
-              </div>
-
-              {/* Average Stats Section */}
-              {selectedPlayerAvgStats && (
-                <div className="player-avg-stats-container">
-                  <div className="avg-stat-item-circle">
-                    <span className="label">평균 득점</span>
-                    <span className="value">{selectedPlayerAvgStats.avgPoints}</span>
-                  </div>
-                  <div className="avg-stat-item-circle">
-                    <span className="label">평균 어시스트</span>
-                    <span className="value">{selectedPlayerAvgStats.avgAssists}</span>
-                  </div>
-                  <div className="avg-stat-item-circle">
-                    <span className="label">평균 리바운드</span>
-                    <span className="value">{selectedPlayerAvgStats.avgRebounds}</span>
-                  </div>
-                  <div className="avg-stat-item-circle">
-                    <span className="label">평균 스틸</span>
-                    <span className="value">{selectedPlayerAvgStats.avgSteals}</span>
-                  </div>
-                  <div className="avg-stat-item-circle">
-                    <span className="label">평균 블록</span>
-                    <span className="value">{selectedPlayerAvgStats.avgBlocks}</span>
-                  </div>
+          <div className="results-container">
+            {needsSelection && (
+              <div className="selection-container">
+                <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
+                <div className="selection-list">
+                  {uniquePlayers.map((player, index) => (
+                    <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
+                      <span className="player-name">{player.name}</span>
+                      <span className="player-info">{player.team} | no.{player.jersey}</span>
+                    </div>
+                  ))}
                 </div>
-              )}
-
-              <div className="competition-buttons-container">
-                {availableCompetitions.map(comp => (
-                  <button
-                    key={comp}
-                    className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
-                    onClick={() => setSelectedCompetition(comp)}
-                  >
-                    {comp.replace('대회', '').trim()}
-                  </button>
-                ))}
               </div>
+            )}
 
-              <div className="table-container desktop-table">
-                <table>
-                  <thead>
-                    <tr>
-                      {DISPLAY_COLUMNS.map(col => (
-                        <th key={col}>{COLUMN_MAPPING[col] || col}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayRecords.map((record, index) => (
-                      <tr key={index}>
+            {!needsSelection && displayRecords.length === 0 && (
+              <div className="no-results">
+                <p>검색 결과가 없습니다.</p>
+              </div>
+            )}
+
+            {displayRecords.length > 0 && (
+              <>
+                <div className="player-header">
+                  <h2>
+                    {displayRecords[0]['선수명']}
+                    <span className="player-sub-info"> {displayRecords[0]['소속팀']} | no.{displayRecords[0]['등번호']}</span>
+                    {isHotPlayer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="flame-emoji" title="Hot Player (평균 득점 Top 5)"> 🔥</span>}
+                    {isDimeDealer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="dime-dealer-emoji" title="Dime Dealer (평균 어시스트 Top 5)"> 🏀</span>}
+                    {isSkySweeper(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="sky-sweeper-emoji" title="Sky Sweeper (평균 리바운드 Top 5)"> 🖐️</span>}
+                    {isStealMaster(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="steal-emoji" title="Steal Master (평균 스틸 Top 5)"> 🥷</span>}
+                  </h2>
+                </div>
+
+                {/* Average Stats Section */}
+                {selectedPlayerAvgStats && (
+                  <div className="player-avg-stats-container">
+                    <div className="avg-stat-item-circle">
+                      <span className="label">평균 득점</span>
+                      <span className="value">{selectedPlayerAvgStats.avgPoints}</span>
+                    </div>
+                    <div className="avg-stat-item-circle">
+                      <span className="label">평균 어시스트</span>
+                      <span className="value">{selectedPlayerAvgStats.avgAssists}</span>
+                    </div>
+                    <div className="avg-stat-item-circle">
+                      <span className="label">평균 리바운드</span>
+                      <span className="value">{selectedPlayerAvgStats.avgRebounds}</span>
+                    </div>
+                    <div className="avg-stat-item-circle">
+                      <span className="label">평균 스틸</span>
+                      <span className="value">{selectedPlayerAvgStats.avgSteals}</span>
+                    </div>
+                    <div className="avg-stat-item-circle">
+                      <span className="label">평균 블록</span>
+                      <span className="value">{selectedPlayerAvgStats.avgBlocks}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="competition-buttons-container">
+                  {availableCompetitions.map(comp => (
+                    <button
+                      key={comp}
+                      className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
+                      onClick={() => setSelectedCompetition(comp)}
+                    >
+                      {comp.replace('대회', '').trim()}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="table-container desktop-table">
+                  <table>
+                    <thead>
+                      <tr>
                         {DISPLAY_COLUMNS.map(col => (
-                          <td key={col}>{record[col]}</td>
+                          <th key={col}>{COLUMN_MAPPING[col] || col}</th>
                         ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {displayRecords.map((record, index) => (
+                        <tr key={index}>
+                          {DISPLAY_COLUMNS.map(col => (
+                            <td key={col}>{record[col]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              {/* Mobile Card View */}
-              <div className="cards-container hide-on-desktop">
-                {displayRecords.map((record, index) => (
-                  <div key={index} className="player-card">
-                    <div className="card-header">
-                      {record['대회명']} <span className="team-name-mobile">vs {record['상대팀']}</span>
+                {/* Mobile Card View */}
+                <div className="cards-container hide-on-desktop">
+                  {displayRecords.map((record, index) => (
+                    <div key={index} className="player-card">
+                      <div className="card-header">
+                        {record['대회명']} <span className="team-name-mobile">vs {record['상대팀']}</span>
+                      </div>
+                      <div className="card-body">
+                        <div className="card-item highlight-yellow">
+                          <span className="label">득점</span>
+                          <span className="value">{record['총득점']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">어시스트</span>
+                          <span className="value">{record['어시스트']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">리바운드</span>
+                          <span className="value">{record['총 리바운드']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">스틸</span>
+                          <span className="value">{record['스틸']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">블록</span>
+                          <span className="value">{record['블록슛']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">3점슛</span>
+                          <span className="value">{record['3점슛 성공']}/{record['3점슛 시도']}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="card-body">
-                      <div className="card-item highlight-yellow">
-                        <span className="label">득점</span>
-                        <span className="value">{record['총득점']}</span>
-                      </div>
-                      <div className="card-item">
-                        <span className="label">어시스트</span>
-                        <span className="value">{record['어시스트']}</span>
-                      </div>
-                      <div className="card-item">
-                        <span className="label">리바운드</span>
-                        <span className="value">{record['총 리바운드']}</span>
-                      </div>
-                      <div className="card-item">
-                        <span className="label">스틸</span>
-                        <span className="value">{record['스틸']}</span>
-                      </div>
-                      <div className="card-item">
-                        <span className="label">블록</span>
-                        <span className="value">{record['블록슛']}</span>
-                      </div>
-                      <div className="card-item">
-                        <span className="label">3점슛</span>
-                        <span className="value">{record['3점슛 성공']}/{record['3점슛 시도']}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );

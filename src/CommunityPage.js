@@ -15,13 +15,11 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import {
-  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import SignUpPage from './SignUpPage';
 import './CommunityPage.css';
 
 const CommunityPage = ({ onGoBack }) => {
@@ -30,15 +28,12 @@ const CommunityPage = ({ onGoBack }) => {
 
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [session, setSession] = useState(null);
   const messagesContainerRef = useRef(null);
 
-  const [authView, setAuthView] = useState('login');
   const [authMessage, setAuthMessage] = useState('');
   const [activeReplyInput, setActiveReplyInput] = useState(null);
   const [replyText, setReplyText] = useState('');
@@ -324,15 +319,14 @@ const CommunityPage = ({ onGoBack }) => {
     }
   };
 
-  const handleSignIn = async () => {
-    setLoading(true);
-    setAuthMessage('');
+  const handleGoogleSignIn = async () => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
     } catch (error) {
       setAuthMessage(error.message);
+      alert('로그인 실패: ' + error.message);
     }
-    setLoading(false);
   };
 
   const handleSignOut = async () => {
@@ -342,12 +336,8 @@ const CommunityPage = ({ onGoBack }) => {
 
       setSession(null);
       setUserProfile(null);
-      setMessages([]);
       setNewMessage('');
-      setEmail('');
-      setPassword('');
       setAuthMessage('');
-      setAuthView('login');
       setActiveReplyInput(null);
       setReplyText('');
       setLinkMetadata({});
@@ -364,7 +354,10 @@ const CommunityPage = ({ onGoBack }) => {
   };
 
   const handleReaction = async (messageId, reactionType) => {
-    if (!session) return;
+    if (!session) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
 
     const messageRef = doc(db, 'messages', messageId);
     const reactionRef = doc(db, 'messages', messageId, 'reactions', session.uid);
@@ -403,6 +396,10 @@ const CommunityPage = ({ onGoBack }) => {
   };
 
   const toggleReplyInput = (messageId) => {
+    if (!session) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
     if (activeReplyInput === messageId) {
       setActiveReplyInput(null);
       setReplyText('');
@@ -462,75 +459,6 @@ const CommunityPage = ({ onGoBack }) => {
       setReplyText(replyToSend);
     }
   };
-
-  const renderAuth = () => (
-    <div className="auth-container">
-      {authView === 'login' ? (
-        <div className="auth-form">
-          <div className="auth-header">
-            <h2 className="auth-title">로그인</h2>
-          </div>
-          <div className="auth-inputs-row">
-            <div className="auth-input-group">
-              <input
-                type="email"
-                placeholder="이메일 주소"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="auth-input"
-              />
-            </div>
-            <div className="auth-input-group">
-              <input
-                type="password"
-                placeholder="비밀번호"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="auth-input"
-              />
-            </div>
-            <div className="auth-buttons-group">
-              <button
-                onClick={handleSignIn}
-                disabled={loading}
-                className="auth-button auth-button-primary"
-              >
-                {loading ? '로그인 중...' : '로그인'}
-              </button>
-              <button
-                onClick={() => setAuthView('signup')}
-                className="auth-button auth-button-secondary"
-              >
-                회원가입
-              </button>
-            </div>
-            <div className="auth-social-login">
-              <button
-                onClick={async () => {
-                  try {
-                    const provider = new GoogleAuthProvider();
-                    await signInWithPopup(auth, provider);
-                  } catch (error) {
-                    setAuthMessage(error.message);
-                  }
-                }}
-                className="auth-button google-login-btn"
-                style={{ marginTop: '10px', backgroundColor: '#4285F4', color: 'white', width: '100%' }}
-              >
-                Google 계정으로 로그인
-              </button>
-            </div>
-          </div>
-          {authMessage && <p className="auth-error">{authMessage}</p>}
-        </div>
-      ) : authView === 'signup' ? (
-        <SignUpPage
-          onSignUpSuccess={() => setAuthView('login')}
-          onBackToLogin={() => setAuthView('login')}
-        />
-      ) : null}
-    </div>
-  );
 
   const LinkCard = ({ url }) => {
     const [metadata, setMetadata] = useState(null);
@@ -871,7 +799,15 @@ const CommunityPage = ({ onGoBack }) => {
               )}
             </>
           ) : (
-            renderAuth()
+            <div className="auth-social-login" style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <button
+                onClick={handleGoogleSignIn}
+                className="auth-button google-login-btn"
+                style={{ backgroundColor: '#4285F4', color: 'white', padding: '10px 20px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}
+              >
+                <span style={{ fontWeight: 'bold' }}>G</span> Google 계정으로 로그인하여 대화에 참여하세요
+              </button>
+            </div>
           )}
         </div>
       </div>
