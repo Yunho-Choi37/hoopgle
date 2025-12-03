@@ -245,6 +245,10 @@ const CommunityPage = ({ onGoBack }) => {
 
       setMessages(messagesData);
       setMessagesLoading(false);
+    }, (error) => {
+      console.error("Error fetching messages:", error);
+      setMessagesLoading(false);
+      // Optional: Set an error state to display to the user
     });
 
     return () => unsubscribe();
