@@ -973,150 +973,180 @@ function App() {
     }
   };
 
-  return (
-    <div className="app-container">
-      {showRankingsPage ? (
-        <RankingsPage
-          middleSchoolRankings={middleSchoolRankings}
-          highSchoolRankings={highSchoolRankings}
-          onGoHome={handleGoHome}
-        />
-      ) : showDetailPage ? (
-        <CommunityPage onGoBack={handleGoBackFromDetail} />
-      ) : (
-        <>
-          <header className="app-header">
-            <h1 className="logo" onClick={handleGoHome}>
-              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
-            </h1>
-            <div className="search-container">
-              <form onSubmit={handleSearch} className="search-form">
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="선수명 또는 학교명 검색..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button type="submit" className="search-button">
-                  <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
-                  </svg>
-                </button>
-              </form>
-            </div>
-          </header>
+  // Render logic
+  if (showRankingsPage) {
+    return (
+      <RankingsPage
+        middleSchoolRankings={middleSchoolRankings}
+        highSchoolRankings={highSchoolRankings}
+        onGoHome={handleGoHome}
+      />
+    );
+  }
 
-          <main className="app-main">
-            {!showResults && !needsSelection && displayRecords.length === 0 && (
-              <div className="main-buttons-container">
-                <button className="main-nav-button" onClick={handleGoToDetailPage}>
-                  <span className="button-icon">💬</span>
-                  <span className="button-text">커뮤니티</span>
-                </button>
-                <button className="main-nav-button" onClick={handleGoToRankingsPage}>
-                  <span className="button-icon">🏆</span>
-                  <span className="button-text">랭킹</span>
-                </button>
-              </div>
-            )}
+  if (showDetailPage) {
+    return <CommunityPage onGoBack={handleGoBackFromDetail} />;
+  }
 
-            {showResults && needsSelection && (
-              <div className="selection-container">
-                <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
-                <div className="selection-list">
-                  {uniquePlayers.map((player, index) => (
-                    <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
-                      <span className="player-name">{player.name}</span>
-                      <span className="player-info">{player.team} | no.{player.jersey}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+  // Search Results View
+  if (showResults) {
+    return (
+      <div className="app-container results-mode">
+        <header className="app-header">
+          <h1 className="logo-small" onClick={handleGoHome}>
+            <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+          </h1>
+          <div className="search-container-small">
+            <form onSubmit={handleSearch} className="search-form-small">
+              <input
+                type="text"
+                className="search-input-small"
+                placeholder="선수명 또는 학교명 검색..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <button type="submit" className="search-button-small">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
+                </svg>
+              </button>
+            </form>
+          </div>
+        </header>
 
-            {showResults && !needsSelection && displayRecords.length === 0 && (
-              <div className="no-results">
-                <p>검색 결과가 없습니다.</p>
-              </div>
-            )}
-
-            {displayRecords.length > 0 && (
-              <div className="results-container">
-                <div className="player-header">
-                  <h2>
-                    {displayRecords[0]['선수명']}
-                    <span className="player-sub-info"> {displayRecords[0]['소속팀']} | no.{displayRecords[0]['등번호']}</span>
-                    {isHotPlayer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="flame-emoji" title="Hot Player (평균 득점 Top 5)"> 🔥</span>}
-                    {isDimeDealer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="dime-dealer-emoji" title="Dime Dealer (평균 어시스트 Top 5)"> 🏀</span>}
-                    {isSkySweeper(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="sky-sweeper-emoji" title="Sky Sweeper (평균 리바운드 Top 5)"> 🖐️</span>}
-                    {isStealMaster(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="steal-emoji" title="Steal Master (평균 스틸 Top 5)"> 🥷</span>}
-                  </h2>
-                </div>
-
-                {/* Average Stats Section */}
-                {selectedPlayerAvgStats && (
-                  <div className="average-stats-container">
-                    <div className="avg-stat-item">
-                      <span className="avg-label">평균 득점</span>
-                      <span className="avg-value">{selectedPlayerAvgStats.avgPoints}</span>
-                    </div>
-                    <div className="avg-stat-item">
-                      <span className="avg-label">평균 어시스트</span>
-                      <span className="avg-value">{selectedPlayerAvgStats.avgAssists}</span>
-                    </div>
-                    <div className="avg-stat-item">
-                      <span className="avg-label">평균 리바운드</span>
-                      <span className="avg-value">{selectedPlayerAvgStats.avgRebounds}</span>
-                    </div>
-                    <div className="avg-stat-item">
-                      <span className="avg-label">평균 스틸</span>
-                      <span className="avg-value">{selectedPlayerAvgStats.avgSteals}</span>
-                    </div>
-                    <div className="avg-stat-item">
-                      <span className="avg-label">평균 블록</span>
-                      <span className="avg-value">{selectedPlayerAvgStats.avgBlocks}</span>
-                    </div>
+        <main className="app-main results-main">
+          {needsSelection && (
+            <div className="selection-container">
+              <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
+              <div className="selection-list">
+                {uniquePlayers.map((player, index) => (
+                  <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
+                    <span className="player-name">{player.name}</span>
+                    <span className="player-info">{player.team} | no.{player.jersey}</span>
                   </div>
-                )}
+                ))}
+              </div>
+            </div>
+          )}
 
-                <div className="competition-filter">
-                  {availableCompetitions.map(comp => (
-                    <button
-                      key={comp}
-                      className={`filter-button ${selectedCompetition === comp ? 'active' : ''}`}
-                      onClick={() => setSelectedCompetition(comp)}
-                    >
-                      {comp.replace('대회', '').trim()}
-                    </button>
-                  ))}
+          {!needsSelection && displayRecords.length === 0 && (
+            <div className="no-results">
+              <p>검색 결과가 없습니다.</p>
+            </div>
+          )}
+
+          {displayRecords.length > 0 && (
+            <div className="results-container">
+              <div className="player-header">
+                <h2>
+                  {displayRecords[0]['선수명']}
+                  <span className="player-sub-info"> {displayRecords[0]['소속팀']} | no.{displayRecords[0]['등번호']}</span>
+                  {isHotPlayer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="flame-emoji" title="Hot Player (평균 득점 Top 5)"> 🔥</span>}
+                  {isDimeDealer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="dime-dealer-emoji" title="Dime Dealer (평균 어시스트 Top 5)"> 🏀</span>}
+                  {isSkySweeper(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="sky-sweeper-emoji" title="Sky Sweeper (평균 리바운드 Top 5)"> 🖐️</span>}
+                  {isStealMaster(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="steal-emoji" title="Steal Master (평균 스틸 Top 5)"> 🥷</span>}
+                </h2>
+              </div>
+
+              {/* Average Stats Section */}
+              {selectedPlayerAvgStats && (
+                <div className="average-stats-container">
+                  <div className="avg-stat-item">
+                    <span className="avg-label">평균 득점</span>
+                    <span className="avg-value">{selectedPlayerAvgStats.avgPoints}</span>
+                  </div>
+                  <div className="avg-stat-item">
+                    <span className="avg-label">평균 어시스트</span>
+                    <span className="avg-value">{selectedPlayerAvgStats.avgAssists}</span>
+                  </div>
+                  <div className="avg-stat-item">
+                    <span className="avg-label">평균 리바운드</span>
+                    <span className="avg-value">{selectedPlayerAvgStats.avgRebounds}</span>
+                  </div>
+                  <div className="avg-stat-item">
+                    <span className="avg-label">평균 스틸</span>
+                    <span className="avg-value">{selectedPlayerAvgStats.avgSteals}</span>
+                  </div>
+                  <div className="avg-stat-item">
+                    <span className="avg-label">평균 블록</span>
+                    <span className="avg-value">{selectedPlayerAvgStats.avgBlocks}</span>
+                  </div>
                 </div>
+              )}
 
-                <div className="table-container">
-                  <table>
-                    <thead>
-                      <tr>
+              <div className="competition-filter">
+                {availableCompetitions.map(comp => (
+                  <button
+                    key={comp}
+                    className={`filter-button ${selectedCompetition === comp ? 'active' : ''}`}
+                    onClick={() => setSelectedCompetition(comp)}
+                  >
+                    {comp.replace('대회', '').trim()}
+                  </button>
+                ))}
+              </div>
+
+              <div className="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      {DISPLAY_COLUMNS.map(col => (
+                        <th key={col}>{COLUMN_MAPPING[col] || col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {displayRecords.map((record, index) => (
+                      <tr key={index}>
                         {DISPLAY_COLUMNS.map(col => (
-                          <th key={col}>{COLUMN_MAPPING[col] || col}</th>
+                          <td key={col}>{record[col]}</td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {displayRecords.map((record, index) => (
-                        <tr key={index}>
-                          {DISPLAY_COLUMNS.map(col => (
-                            <td key={col}>{record[col]}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </main>
-        </>
-      )}
+            </div>
+          )}
+        </main>
+      </div>
+    );
+  }
+
+  // Default Home View (Google-like)
+  return (
+    <div className="app-container home-mode">
+      <div className="search-container">
+        <h1 className="logo">
+          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+        </h1>
+        <form onSubmit={handleSearch} className="search-form">
+          <div className="search-bar">
+            <input
+              type="text"
+              placeholder="선수명 또는 팀명으로 검색"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="buttons">
+            <button type="submit">검색</button>
+            <button type="button" onClick={handleGoToDetailPage}>Hoop Zone</button>
+            <button type="button" onClick={handleGoToRankingsPage}>Rankings</button>
+          </div>
+        </form>
+        <div className="data-source-container">
+          <span className="data-source-wrapper">
+            Data Source :
+            <a href="http://www.kssbf.or.kr/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
+              KSSBF
+            </a>
+            <a href="https://www.koreabasketball.or.kr/main/" target="_blank" rel="noopener noreferrer" className="kssbf-link">
+              KBA
+            </a>
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
