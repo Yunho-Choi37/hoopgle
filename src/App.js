@@ -38,7 +38,6 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
 
   const renderRankingList = (rankings) => {
     const sortedRankings = getSortedRankings(rankings);
-    // console.log('renderRankingList: sortedRankings (first 10):', JSON.stringify(sortedRankings.slice(0, 10), null, 2));
 
     // Filter by search term and limit to top 50
     const filteredRankings = sortedRankings
@@ -47,7 +46,6 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
         player.team.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .slice(0, 50); // Limit to top 50 players
-    // console.log('renderRankingList: filteredRankings (first 10):', JSON.stringify(filteredRankings.slice(0, 10), null, 2));
 
     if (filteredRankings.length === 0) {
       return <p className="no-results-message">검색 결과가 없습니다.</p>;
@@ -162,7 +160,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
     <div className="rankings-container">
       <div className="results-header">
         <h1 className="logo-small" onClick={onGoHome}>
-          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
         </h1>
         <button onClick={onGoHome} className="home-button-rankings">홈으로</button>
       </div>
@@ -991,30 +989,28 @@ function App() {
   // Search Results View
   if (showResults) {
     return (
-      <div className="app-container results-mode">
-        <header className="app-header">
+      <div className="App">
+        <div className="results-header">
+          <button className="back-button" onClick={handleGoHome}>
+            <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16px" height="16px">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+            </svg>
+          </button>
           <h1 className="logo-small" onClick={handleGoHome}>
-            <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+            <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
           </h1>
-          <div className="search-container-small">
-            <form onSubmit={handleSearch} className="search-form-small">
-              <input
-                type="text"
-                className="search-input-small"
-                placeholder="선수명 또는 학교명 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button type="submit" className="search-button-small">
-                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                  <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path>
-                </svg>
-              </button>
-            </form>
-          </div>
-        </header>
+          <form onSubmit={handleSearch} className="search-form-results">
+            <input
+              type="text"
+              placeholder="선수명 또는 학교명 검색..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <button type="submit">검색</button>
+          </form>
+        </div>
 
-        <main className="app-main results-main">
+        <div className="results-container">
           {needsSelection && (
             <div className="selection-container">
               <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
@@ -1036,7 +1032,7 @@ function App() {
           )}
 
           {displayRecords.length > 0 && (
-            <div className="results-container">
+            <>
               <div className="player-header">
                 <h2>
                   {displayRecords[0]['선수명']}
@@ -1050,35 +1046,35 @@ function App() {
 
               {/* Average Stats Section */}
               {selectedPlayerAvgStats && (
-                <div className="average-stats-container">
-                  <div className="avg-stat-item">
-                    <span className="avg-label">평균 득점</span>
-                    <span className="avg-value">{selectedPlayerAvgStats.avgPoints}</span>
+                <div className="player-avg-stats-container">
+                  <div className="avg-stat-item-circle">
+                    <span className="label">평균 득점</span>
+                    <span className="value">{selectedPlayerAvgStats.avgPoints}</span>
                   </div>
-                  <div className="avg-stat-item">
-                    <span className="avg-label">평균 어시스트</span>
-                    <span className="avg-value">{selectedPlayerAvgStats.avgAssists}</span>
+                  <div className="avg-stat-item-circle">
+                    <span className="label">평균 어시스트</span>
+                    <span className="value">{selectedPlayerAvgStats.avgAssists}</span>
                   </div>
-                  <div className="avg-stat-item">
-                    <span className="avg-label">평균 리바운드</span>
-                    <span className="avg-value">{selectedPlayerAvgStats.avgRebounds}</span>
+                  <div className="avg-stat-item-circle">
+                    <span className="label">평균 리바운드</span>
+                    <span className="value">{selectedPlayerAvgStats.avgRebounds}</span>
                   </div>
-                  <div className="avg-stat-item">
-                    <span className="avg-label">평균 스틸</span>
-                    <span className="avg-value">{selectedPlayerAvgStats.avgSteals}</span>
+                  <div className="avg-stat-item-circle">
+                    <span className="label">평균 스틸</span>
+                    <span className="value">{selectedPlayerAvgStats.avgSteals}</span>
                   </div>
-                  <div className="avg-stat-item">
-                    <span className="avg-label">평균 블록</span>
-                    <span className="avg-value">{selectedPlayerAvgStats.avgBlocks}</span>
+                  <div className="avg-stat-item-circle">
+                    <span className="label">평균 블록</span>
+                    <span className="value">{selectedPlayerAvgStats.avgBlocks}</span>
                   </div>
                 </div>
               )}
 
-              <div className="competition-filter">
+              <div className="competition-buttons-container">
                 {availableCompetitions.map(comp => (
                   <button
                     key={comp}
-                    className={`filter-button ${selectedCompetition === comp ? 'active' : ''}`}
+                    className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
                     onClick={() => setSelectedCompetition(comp)}
                   >
                     {comp.replace('대회', '').trim()}
@@ -1086,7 +1082,7 @@ function App() {
                 ))}
               </div>
 
-              <div className="table-container">
+              <div className="table-container desktop-table">
                 <table>
                   <thead>
                     <tr>
@@ -1106,19 +1102,56 @@ function App() {
                   </tbody>
                 </table>
               </div>
-            </div>
+
+              {/* Mobile Card View */}
+              <div className="cards-container hide-on-desktop">
+                {displayRecords.map((record, index) => (
+                  <div key={index} className="player-card">
+                    <div className="card-header">
+                      {record['대회명']} <span className="team-name-mobile">vs {record['상대팀']}</span>
+                    </div>
+                    <div className="card-body">
+                      <div className="card-item highlight-yellow">
+                        <span className="label">득점</span>
+                        <span className="value">{record['총득점']}</span>
+                      </div>
+                      <div className="card-item">
+                        <span className="label">어시스트</span>
+                        <span className="value">{record['어시스트']}</span>
+                      </div>
+                      <div className="card-item">
+                        <span className="label">리바운드</span>
+                        <span className="value">{record['총 리바운드']}</span>
+                      </div>
+                      <div className="card-item">
+                        <span className="label">스틸</span>
+                        <span className="value">{record['스틸']}</span>
+                      </div>
+                      <div className="card-item">
+                        <span className="label">블록</span>
+                        <span className="value">{record['블록슛']}</span>
+                      </div>
+                      <div className="card-item">
+                        <span className="label">3점슛</span>
+                        <span className="value">{record['3점슛 성공']}/{record['3점슛 시도']}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
-        </main>
+        </div>
       </div>
     );
   }
 
   // Default Home View (Google-like)
   return (
-    <div className="app-container home-mode">
+    <div className="App">
       <div className="search-container">
         <h1 className="logo">
-          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
         </h1>
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-bar">

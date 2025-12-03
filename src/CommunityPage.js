@@ -71,9 +71,8 @@ const CommunityPage = ({ onGoBack }) => {
     // 항상 안내사항 채널로 저장
     localStorage.setItem('activeChannel', '안내사항');
 
-    // 컴포넌트가 언마운트될 때 cleanup 함수
     return () => {
-      // 컴포넌트가 언마운트될 때는 localStorage를 정리하지 않음 (사용자가 다른 곳으로 이동한 경우)
+      // cleanup
     };
   }, [activeReplyInput, replyText]);
 
@@ -88,21 +87,6 @@ const CommunityPage = ({ onGoBack }) => {
     return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
-  const isNewsLink = (url) => {
-    const newsDomains = [
-      'naver.com', 'daum.net', 'google.com', 'yahoo.com',
-      'chosun.com', 'joongang.co.kr', 'donga.com', 'hankyung.com',
-      'mk.co.kr', 'etnews.com', 'zdnet.co.kr', 'itworld.co.kr',
-      'basketball.or.kr', 'kssbf.or.kr', 'koreabasketball.or.kr',
-      'sports.news.naver.com', 'news.naver.com', 'sports.daum.net',
-      'news.daum.net', 'sportskhan.co.kr', 'sportsworldi.com',
-      'sportalkorea.com', 'basketball.or.kr', 'kbl.or.kr', 'wkbl.or.kr'
-    ];
-    const isNews = newsDomains.some(domain => url.includes(domain));
-    // console.log('News link check:', url, 'isNews:', isNews);
-    return isNews;
-  };
-
   const getYouTubeThumbnail = (url) => {
     let videoId = '';
     if (url.includes('youtube.com/watch?v=')) {
@@ -113,29 +97,9 @@ const CommunityPage = ({ onGoBack }) => {
     return videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null;
   };
 
-  // 모든 사이트의 썸네일을 가져오는 함수
-  const getSiteThumbnail = (url) => {
-    try {
-      const urlObj = new URL(url);
-      const hostname = urlObj.hostname.replace('www.', '');
-
-      // YouTube는 기존 함수 사용
-      if (isYouTubeLink(url)) {
-        return getYouTubeThumbnail(url);
-      }
-
-      // 다른 사이트들은 메타데이터에서 이미지 가져오기
-      return null; // 메타데이터에서 처리
-    } catch (error) {
-      console.error('Error generating site thumbnail:', error);
-      return null;
-    }
-  };
-
   // 카카오톡 방식으로 Open Graph 메타데이터를 가져오는 함수
   const getOpenGraphData = async (url) => {
     try {
-      // Microlink API를 사용하여 Open Graph 메타데이터 가져오기
       const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&meta=true&embed=meta`);
       const data = await response.json();
 
@@ -205,17 +169,12 @@ const CommunityPage = ({ onGoBack }) => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (session) {
-        // 1. Check user info in 'users' collection
         const userDocRef = doc(db, 'users', session.uid);
         const userDocSnap = await getDoc(userDocRef);
 
         if (userDocSnap.exists()) {
-          // console.log('Profile found:', userDocSnap.data());
           setUserProfile(userDocSnap.data());
         } else {
-          // console.log('Profile not found, creating new profile...');
-
-          // 2. Create new profile if not exists
           const username = session.displayName ||
             session.email?.split('@')[0] ||
             `사용자_${session.uid.slice(0, 8)}`;
@@ -228,11 +187,9 @@ const CommunityPage = ({ onGoBack }) => {
 
           try {
             await setDoc(userDocRef, newProfile);
-            // console.log('Profile created successfully:', newProfile);
             setUserProfile(newProfile);
           } catch (error) {
             console.error('Error creating profile:', error);
-            // 3. Use default if creation fails
             setUserProfile({
               username: username,
               avatar_url: '/default-avatar.png'
@@ -246,7 +203,6 @@ const CommunityPage = ({ onGoBack }) => {
 
   // Fetch messages and subscribe to realtime updates
   useEffect(() => {
-    // console.log('Fetching messages for channel:', activeChannel);
     setMessagesLoading(true);
 
     const q = query(
@@ -258,7 +214,6 @@ const CommunityPage = ({ onGoBack }) => {
     const unsubscribe = onSnapshot(q, async (querySnapshot) => {
       const messagesData = [];
 
-      // Process messages
       for (const docSnapshot of querySnapshot.docs) {
         const msgData = docSnapshot.data();
         const msgId = docSnapshot.id;
@@ -272,7 +227,6 @@ const CommunityPage = ({ onGoBack }) => {
           if (msgData.username) {
             profile = { username: msgData.username, avatar_url: msgData.avatar_url || '/default-avatar.png' };
           } else {
-            // Fallback fetch
             try {
               const userSnap = await getDoc(doc(db, 'users', msgData.user_id));
               if (userSnap.exists()) profile = userSnap.data();
@@ -313,32 +267,24 @@ const CommunityPage = ({ onGoBack }) => {
       return messages;
     }
 
-    // console.log('Filtering messages for category:', activeCategory);
-
     return messages.filter(message => {
       const links = detectLinks(message.content);
-      // console.log('Message links:', links);
 
-      // 링크가 없는 메시지는 모든 카테고리에서 보이도록 함
       if (links.length === 0) {
-        // console.log('No links found, showing message');
         return true;
       }
 
       const hasMatchingLink = links.some(link => {
         switch (activeCategory) {
           case 'YouTube':
-            // YouTube 링크만 표시
             return isYouTubeLink(link);
           case 'News':
-            // YouTube가 아닌 모든 링크 표시
             return !isYouTubeLink(link);
           default:
             return true;
         }
       });
 
-      // console.log('Message has matching link:', hasMatchingLink);
       return hasMatchingLink;
     });
   };
@@ -346,13 +292,11 @@ const CommunityPage = ({ onGoBack }) => {
   const handleSendMessage = async () => {
     if (newMessage.trim() === '' || !session) return;
 
-    // 안내사항 채널에서 운영자 권한 확인
     if (activeChannel === '안내사항' && !isAdmin()) {
       alert('안내사항 채널은 운영자만 작성할 수 있습니다.');
       return;
     }
 
-    // 280자 제한 확인
     if (newMessage.trim().length > 280) {
       alert('메시지는 280자를 초과할 수 없습니다.');
       return;
@@ -367,8 +311,8 @@ const CommunityPage = ({ onGoBack }) => {
         user_id: session.uid,
         channel: activeChannel,
         created_at: serverTimestamp(),
-        username: userProfile?.username || 'Unknown', // Denormalize
-        avatar_url: userProfile?.avatar_url || '/default-avatar.png', // Denormalize
+        username: userProfile?.username || 'Unknown',
+        avatar_url: userProfile?.avatar_url || '/default-avatar.png',
         likes: 0,
         laughs: 0,
         cries: 0
@@ -396,7 +340,6 @@ const CommunityPage = ({ onGoBack }) => {
       setLoading(true);
       await signOut(auth);
 
-      // 로그아웃 후 상태 정리
       setSession(null);
       setUserProfile(null);
       setMessages([]);
@@ -409,12 +352,9 @@ const CommunityPage = ({ onGoBack }) => {
       setReplyText('');
       setLinkMetadata({});
 
-      // localStorage 정리
       localStorage.removeItem('activeReplyInput');
       localStorage.removeItem('replyText');
       localStorage.removeItem('activeChannel');
-
-      // console.log('로그아웃 성공');
     } catch (error) {
       console.error('로그아웃 중 오류:', error);
       alert('로그아웃 중 오류가 발생했습니다.');
@@ -426,34 +366,21 @@ const CommunityPage = ({ onGoBack }) => {
   const handleReaction = async (messageId, reactionType) => {
     if (!session) return;
 
-    // In Firestore, simpler to just increment a counter on the message document
-    // and maybe store the user's reaction in a subcollection to prevent double voting if needed.
-    // For simplicity here, we will just increment the counter.
-    // Note: This doesn't prevent multiple votes from same user easily without extra logic.
-
     const messageRef = doc(db, 'messages', messageId);
-
-    // To prevent multiple votes, we should check a 'reactions' subcollection.
     const reactionRef = doc(db, 'messages', messageId, 'reactions', session.uid);
     const reactionSnap = await getDoc(reactionRef);
 
     if (reactionSnap.exists()) {
-      // Already reacted? Toggle or ignore? 
-      // Let's just ignore for now to keep it simple, or toggle.
       return;
     }
 
     try {
       await setDoc(reactionRef, { type: reactionType });
 
-      // Increment counter
-      // We need to read the current count or use increment(). 
-      // Let's use updateDoc with increment if we imported it, but we didn't.
-      // Let's just read and update.
       const msgSnap = await getDoc(messageRef);
       if (msgSnap.exists()) {
         const data = msgSnap.data();
-        const currentCount = data[reactionType + 's'] || 0; // likes, laughs, cries
+        const currentCount = data[reactionType + 's'] || 0;
         await updateDoc(messageRef, {
           [reactionType + 's']: currentCount + 1
         });
@@ -468,26 +395,20 @@ const CommunityPage = ({ onGoBack }) => {
     if (!message) return 0;
 
     switch (reactionType) {
-      case 'like':
-        return message.likes || 0;
-      case 'laugh':
-        return message.laughs || 0;
-      case 'cry':
-        return message.cries || 0;
-      default:
-        return 0;
+      case 'like': return message.likes || 0;
+      case 'laugh': return message.laughs || 0;
+      case 'cry': return message.cries || 0;
+      default: return 0;
     }
   };
 
   const toggleReplyInput = (messageId) => {
     if (activeReplyInput === messageId) {
-      // 댓글 입력 취소
       setActiveReplyInput(null);
       setReplyText('');
       localStorage.removeItem('activeReplyInput');
       localStorage.removeItem('replyText');
     } else {
-      // 댓글 입력 시작
       setActiveReplyInput(messageId);
       setReplyText('');
     }
@@ -496,7 +417,6 @@ const CommunityPage = ({ onGoBack }) => {
   const handleSendReply = async (messageId) => {
     if (!session || !replyText.trim()) return;
 
-    // 280자 제한 확인
     if (replyText.trim().length > 280) {
       alert('댓글은 280자를 초과할 수 없습니다.');
       return;
@@ -514,7 +434,7 @@ const CommunityPage = ({ onGoBack }) => {
         avatar_url: userProfile?.avatar_url || '/default-avatar.png'
       });
 
-      // Manually update local state to show reply immediately (since we don't have realtime listener for replies)
+      // Optimistic update
       setMessages(prev => prev.map(msg => {
         if (msg.id === messageId) {
           return {
@@ -612,51 +532,6 @@ const CommunityPage = ({ onGoBack }) => {
     </div>
   );
 
-  const renderMessageContent = (content) => {
-    const links = detectLinks(content);
-    if (links.length === 0) {
-      return <p className="message-text">{content}</p>;
-    }
-
-    let processedContent = content;
-    const embeds = [];
-
-    links.forEach((link, index) => {
-      const linkId = `link-${index}`;
-      processedContent = processedContent.replace(link, `[${linkId}]`);
-
-      if (isYouTubeLink(link)) {
-        // YouTube는 기존 방식으로 크게 표시
-        const thumbnailUrl = getYouTubeThumbnail(link);
-        if (thumbnailUrl) {
-          embeds.push(
-            <div key={linkId} className="link-embed youtube-embed">
-              <a href={link} target="_blank" rel="noopener noreferrer" className="youtube-thumbnail">
-                <img src={thumbnailUrl} alt="YouTube thumbnail" />
-              </a>
-              <a href={link} target="_blank" rel="noopener noreferrer" className="link-url">
-                {link}
-              </a>
-            </div>
-          );
-        }
-      } else {
-        // 다른 사이트들은 메타데이터를 사용하여 썸네일 표시
-        embeds.push(
-          <LinkCard key={linkId} url={link} />
-        );
-      }
-    });
-
-    return (
-      <>
-        <p className="message-text">{processedContent}</p>
-        {embeds}
-      </>
-    );
-  };
-
-  // 링크 카드 컴포넌트
   const LinkCard = ({ url }) => {
     const [metadata, setMetadata] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -670,7 +545,6 @@ const CommunityPage = ({ onGoBack }) => {
           const meta = await loadLinkMetadata(url);
           setMetadata(meta);
 
-          // YouTube가 아닌 경우 Open Graph 데이터 가져오기
           if (!isYouTubeLink(url)) {
             const og = await getOpenGraphData(url);
             setOgData(og);
@@ -731,183 +605,274 @@ const CommunityPage = ({ onGoBack }) => {
     );
   };
 
-  return (
-    <div className="community-container">
-      <div className="community-header">
-        <h1 className="logo-small" onClick={onGoBack}>
-          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
-        </h1>
-        <button onClick={onGoBack} className="home-button-community">홈으로</button>
-      </div>
+  const renderMessageContent = (content) => {
+    const links = detectLinks(content);
+    if (links.length === 0) {
+      return <p className="message-text">{content}</p>;
+    }
 
-      <div className="community-content">
-        <div className="channels-sidebar">
-          <button
-            className={`channel-button ${activeChannel === '안내사항' ? 'active' : ''}`}
-            onClick={() => setActiveChannel('안내사항')}
-          >
-            📢 안내사항
-          </button>
-          <button
-            className={`channel-button ${activeChannel === '자유게시판' ? 'active' : ''}`}
-            onClick={() => setActiveChannel('자유게시판')}
-          >
-            🗣 자유게시판
-          </button>
-          <button
-            className={`channel-button ${activeChannel === '데일리훕' ? 'active' : ''}`}
-            onClick={() => setActiveChannel('데일리훕')}
-          >
-            🏀 데일리훕
-          </button>
-        </div>
+    let processedContent = content;
+    const embeds = [];
 
-        <div className="chat-area">
-          <div className="chat-header">
-            <h2>{activeChannel}</h2>
-            {/* 데일리훕 채널일 때 카테고리 필터 표시 */}
-            {activeChannel === '데일리훕' && (
-              <div className="category-filters">
-                <button
-                  className={`category-filter-btn ${activeCategory === '전체' ? 'active' : ''}`}
-                  onClick={() => setActiveCategory('전체')}
-                >
-                  전체
-                </button>
-                <button
-                  className={`category-filter-btn ${activeCategory === 'YouTube' ? 'active' : ''}`}
-                  onClick={() => setActiveCategory('YouTube')}
-                >
-                  YouTube
-                </button>
-                <button
-                  className={`category-filter-btn ${activeCategory === 'News' ? 'active' : ''}`}
-                  onClick={() => setActiveCategory('News')}
-                >
-                  News
-                </button>
-              </div>
-            )}
+    links.forEach((link, index) => {
+      const linkId = `link-${index}`;
+      processedContent = processedContent.replace(link, `[${linkId}]`);
+
+      if (isYouTubeLink(link)) {
+        const thumbnailUrl = getYouTubeThumbnail(link);
+        if (thumbnailUrl) {
+          embeds.push(
+            <div key={linkId} className="link-embed youtube-embed">
+              <a href={link} target="_blank" rel="noopener noreferrer" className="youtube-thumbnail">
+                <img src={thumbnailUrl} alt="YouTube thumbnail" />
+                <div className="youtube-play-button">▶</div>
+              </a>
+              <a href={link} target="_blank" rel="noopener noreferrer" className="link-url">
+                {link}
+              </a>
+            </div>
+          );
+        }
+      } else {
+        embeds.push(
+          <LinkCard key={linkId} url={link} />
+        );
+      }
+    });
+
+    return (
+      <>
+        <p className="message-text">{processedContent}</p>
+        {embeds}
+      </>
+    );
+  };
+
+  const renderContent = () => {
+    const filteredMessages = filterMessagesByCategory(messages);
+
+    if (filteredMessages.length === 0) {
+      return <div className="no-messages">메시지가 없습니다.</div>;
+    }
+
+    return filteredMessages.map((msg) => (
+      <div key={msg.id} className="message-item">
+        <img
+          src={msg.profiles?.avatar_url || '/default-avatar.png'}
+          alt="Profile"
+          className="message-avatar"
+        />
+        <div className="message-content-wrapper">
+          <span className="message-author">
+            {msg.profiles?.username || '알 수 없는 사용자'}
+          </span>
+
+          {renderMessageContent(msg.content)}
+
+          <div className="message-actions">
+            <button className={`reaction-btn ${msg.likes > 0 ? 'active' : ''}`} onClick={() => handleReaction(msg.id, 'like')}>
+              👍 <span className="reaction-count">{getReactionCount(msg.id, 'like')}</span>
+            </button>
+            <button className={`reaction-btn ${msg.laughs > 0 ? 'active' : ''}`} onClick={() => handleReaction(msg.id, 'laugh')}>
+              😂 <span className="reaction-count">{getReactionCount(msg.id, 'laugh')}</span>
+            </button>
+            <button className={`reaction-btn ${msg.cries > 0 ? 'active' : ''}`} onClick={() => handleReaction(msg.id, 'cry')}>
+              😢 <span className="reaction-count">{getReactionCount(msg.id, 'cry')}</span>
+            </button>
+            <button className="reply-btn" onClick={() => toggleReplyInput(msg.id)}>
+              💬 댓글
+            </button>
           </div>
+          <span className="message-timestamp">
+            {msg.created_at?.toDate ? msg.created_at.toDate().toLocaleString() : new Date().toLocaleString()}
+          </span>
 
-          <div className="messages-container" ref={messagesContainerRef}>
-            {messagesLoading ? (
-              <div className="loading-messages">메시지 로딩 중...</div>
-            ) : (
-              filterMessagesByCategory(messages).map((message) => (
-                <div key={message.id} className="message-item">
-                  <div className="message-avatar">
-                    <img src={message.profiles?.avatar_url || '/default-avatar.png'} alt="Avatar" />
-                  </div>
-                  <div className="message-content-wrapper">
-                    <div className="message-header">
-                      <span className="username">{message.profiles?.username || 'Unknown'}</span>
-                      <span className="timestamp">{new Date(message.created_at?.toDate ? message.created_at.toDate() : message.created_at).toLocaleString()}</span>
-                    </div>
-                    <div className="message-body">
-                      {renderMessageContent(message.content)}
-                    </div>
-
-                    <div className="message-actions">
-                      <button
-                        className={`reaction-btn ${getReactionCount(message.id, 'like') > 0 ? 'active' : ''}`}
-                        onClick={() => handleReaction(message.id, 'like')}
-                      >
-                        👍 {getReactionCount(message.id, 'like')}
-                      </button>
-                      <button
-                        className={`reaction-btn ${getReactionCount(message.id, 'laugh') > 0 ? 'active' : ''}`}
-                        onClick={() => handleReaction(message.id, 'laugh')}
-                      >
-                        😂 {getReactionCount(message.id, 'laugh')}
-                      </button>
-                      <button
-                        className={`reaction-btn ${getReactionCount(message.id, 'cry') > 0 ? 'active' : ''}`}
-                        onClick={() => handleReaction(message.id, 'cry')}
-                      >
-                        😭 {getReactionCount(message.id, 'cry')}
-                      </button>
-                      <button className="reply-btn" onClick={() => toggleReplyInput(message.id)}>
-                        💬 댓글 {message.replies?.length || 0}
-                      </button>
-                    </div>
-
-                    {/* 댓글 목록 */}
-                    {message.replies && message.replies.length > 0 && (
-                      <div className="replies-list">
-                        {message.replies.map(reply => (
-                          <div key={reply.id} className="reply-item">
-                            <div className="reply-avatar">
-                              <img src={reply.avatar_url || '/default-avatar.png'} alt="Reply Avatar" />
-                            </div>
-                            <div className="reply-content">
-                              <div className="reply-header">
-                                <span className="reply-username">{reply.username || 'Unknown'}</span>
-                                <span className="reply-timestamp">
-                                  {reply.created_at?.toDate ? new Date(reply.created_at.toDate()).toLocaleString() : new Date(reply.created_at).toLocaleString()}
-                                </span>
-                              </div>
-                              <div className="reply-text">{reply.content}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* 댓글 입력창 */}
-                    {activeReplyInput === message.id && (
-                      <div className="reply-input-area">
-                        {session ? (
-                          <>
-                            <input
-                              type="text"
-                              placeholder="댓글을 입력하세요..."
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              onKeyPress={(e) => e.key === 'Enter' && handleSendReply(message.id)}
-                            />
-                            <button onClick={() => handleSendReply(message.id)}>등록</button>
-                          </>
-                        ) : (
-                          <div className="login-required-msg">댓글을 작성하려면 로그인이 필요합니다.</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-            {messages.length === 0 && !messagesLoading && (
-              <div className="no-messages">메시지가 없습니다.</div>
-            )}
-          </div>
-
-          <div className="message-input-area">
-            {session ? (
-              <>
-                <textarea
-                  placeholder={activeChannel === '안내사항' && !isAdmin() ? "안내사항은 운영자만 작성할 수 있습니다." : "메시지를 입력하세요..."}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  disabled={activeChannel === '안내사항' && !isAdmin()}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
+          {activeReplyInput === msg.id && (
+            <div className="reply-input-container">
+              <div className="reply-input-wrapper">
+                <input
+                  type="text"
+                  placeholder="댓글을 입력하세요... (280자 제한)"
+                  value={replyText}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 280) {
+                      setReplyText(value);
                     }
                   }}
+                  onKeyPress={(e) => { if (e.key === 'Enter') handleSendReply(msg.id); }}
+                  maxLength={280}
                 />
-                <button
-                  onClick={handleSendMessage}
-                  disabled={activeChannel === '안내사항' && !isAdmin()}
-                >
-                  전송
-                </button>
-              </>
-            ) : (
-              renderAuth()
-            )}
-          </div>
+                <div className="character-count reply-char-count">
+                  {replyText.length}/280
+                </div>
+              </div>
+              <button onClick={() => handleSendReply(msg.id)} disabled={replyText.trim().length === 0 || replyText.length > 280}>
+                전송
+              </button>
+              <button onClick={() => {
+                setActiveReplyInput(null);
+                setReplyText('');
+                localStorage.removeItem('activeReplyInput');
+                localStorage.removeItem('replyText');
+              }}>취소</button>
+            </div>
+          )}
+
+          {/* 댓글 목록 */}
+          {msg.replies && msg.replies.length > 0 && (
+            <div className="replies-container">
+              {msg.replies.map((reply) => (
+                <div key={reply.id} className="reply-item">
+                  <div className="reply-content">
+                    <span className="reply-author">
+                      {reply.username ||
+                        (reply.user_id ? `사용자_${reply.user_id.slice(0, 8)}` : '알 수 없는 사용자')}
+                    </span>
+                    <div className="reply-text-wrapper">
+                      <p>{reply.content}</p>
+                    </div>
+                  </div>
+                  <span className="reply-timestamp">
+                    {reply.created_at?.toDate ? reply.created_at.toDate().toLocaleString() : new Date().toLocaleString()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    ));
+  };
+
+  return (
+    <div className="community-page">
+      {/* 상단 헤더 - 사이드바를 위로 이동 */}
+      <div className="top-header">
+        <div className="header-left">
+          <h3 className="logo-small">
+            <span className="hoopgle-red">H</span>
+            <span className="hoopgle-yellow">o</span>
+            <span className="hoopgle-navy">o</span>
+            <span className="hoopgle-yellow">p</span>
+            <span className="hoopgle-navy"> Z</span>
+            <span className="hoopgle-yellow">o</span>
+            <span className="hoopgle-navy">n</span>
+            <span className="hoopgle-yellow">e</span>
+          </h3>
+          {session && (
+            <div className="profile-info-below-logo">
+              <span className="profile-name-below-logo">
+                {userProfile?.username || session.email?.split('@')[0] || '사용자'}
+              </span>
+              <button onClick={handleSignOut} className="signout-button-below-logo" disabled={loading}>
+                {loading ? '로그아웃 중...' : '로그아웃'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="header-center">
+          <ul className="channel-list-horizontal">
+            <li
+              className={`channel-item-horizontal ${activeChannel === '안내사항' ? 'active' : ''}`}
+              onClick={() => setActiveChannel('안내사항')}
+            >
+              📢 안내사항
+            </li>
+            <li
+              className={`channel-item-horizontal ${activeChannel === '자유채팅' ? 'active' : ''}`}
+              onClick={() => setActiveChannel('자유채팅')}
+            >
+              💬 자유채팅
+            </li>
+            <li
+              className={`channel-item-horizontal ${activeChannel === '데일리훕' ? 'active' : ''}`}
+              onClick={() => setActiveChannel('데일리훕')}
+            >
+              🔥 데일리훕
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {/* 홈으로 버튼을 별도 영역으로 분리 */}
+      <div className="home-button-container">
+        <button onClick={onGoBack} className="back-button-community">홈으로</button>
+      </div>
+
+      {/* 데일리훕 카테고리 필터 */}
+      {activeChannel === '데일리훕' && (
+        <div className="category-filter">
+          <button
+            className={`category-button ${activeCategory === '전체' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('전체')}
+          >
+            전체
+          </button>
+          <button
+            className={`category-button ${activeCategory === 'YouTube' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('YouTube')}
+          >
+            🎥 YouTube
+          </button>
+          <button
+            className={`category-button ${activeCategory === 'News' ? 'active' : ''}`}
+            onClick={() => setActiveCategory('News')}
+          >
+            📰 News
+          </button>
+        </div>
+      )}
+
+      <div className="chat-area">
+        <div className="messages-list" ref={messagesContainerRef}>
+          {messagesLoading ? (
+            <div className="loading-messages">
+              <div className="loading-spinner"></div>
+              <p>메시지를 불러오는 중...</p>
+            </div>
+          ) : (
+            renderContent()
+          )}
+        </div>
+
+        <div className="chat-input-box">
+          {session ? (
+            <>
+              {activeChannel === '안내사항' && !isAdmin() ? (
+                <div className="admin-only-message">
+                  <p>안내사항 채널은 운영자만 작성할 수 있습니다.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="input-container">
+                    <input
+                      type="text"
+                      placeholder={`${activeChannel}에 메시지 보내기 (280자 제한)`}
+                      value={newMessage}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value.length <= 280) {
+                          setNewMessage(value);
+                        }
+                      }}
+                      onKeyPress={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
+                      maxLength={280}
+                    />
+                    <div className="character-count">
+                      {newMessage.length}/280
+                    </div>
+                  </div>
+                  <button onClick={handleSendMessage} disabled={newMessage.trim().length === 0 || newMessage.length > 280}>
+                    전송
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            renderAuth()
+          )}
         </div>
       </div>
     </div>
