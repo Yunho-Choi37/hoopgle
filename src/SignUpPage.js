@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from './supabaseClient';
+import { auth, db } from './firebaseConfig';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import './SignUpPage.css';
 
 const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
@@ -22,17 +24,16 @@ const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
     setNicknameStatus('checking');
     setError('');
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('username')
-        .eq('username', nickname)
-        .single();
+      // Check if nickname exists in 'users' collection
+      // Note: This requires a way to query by username. 
+      // For simplicity and performance in Firestore, we might want to store usernames in a separate collection or use a query.
+      // Here we will assume we can't easily check uniqueness without a dedicated structure or query.
+      // Ideally, we should have a 'usernames' collection where document ID is the username.
 
-      if (error && error.code !== 'PGRST116') { // PGRST116: 'exact one row expected, but 0 rows returned'
-        throw error;
-      }
+      const usernameRef = doc(db, "usernames", nickname);
+      const usernameSnap = await getDoc(usernameRef);
 
-      if (data) {
+      if (usernameSnap.exists()) {
         setNicknameStatus('taken');
       } else {
         setNicknameStatus('available');
@@ -64,40 +65,42 @@ const SignUpPage = ({ onSignUpSuccess, onBackToLogin }) => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            username: nickname,
-          },
-        },
+      // 1. Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Update profile (display name)
+      await updateProfile(user, {
+        displayName: nickname,
+        photoURL: '/default-avatar.png'
       });
 
-      if (error) throw error;
+      // 3. Create user document in Firestore 'users' collection
+      await setDoc(doc(db, "users", user.uid), {
+        username: nickname,
+        email: email,
+        avatar_url: '/default-avatar.png',
+        created_at: new Date().toISOString()
+      });
 
-      // 회원가입 성공 후 profiles 테이블에 사용자 정보 저장
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              username: nickname,
-              email: email,
-              avatar_url: '/default-avatar.png'
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-        }
-      }
+      // 4. Reserve nickname in 'usernames' collection
+      await setDoc(doc(db, "usernames", nickname), {
+        uid: user.uid
+      });
 
       onSignUpSuccess(); // Show success message in the parent component
 
     } catch (error) {
-      setError(error.error_description || error.message);
+      console.error("Signup error:", error);
+      let errorMessage = "회원가입 중 오류가 발생했습니다.";
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "이미 사용 중인 이메일입니다.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "비밀번호는 6자리 이상이어야 합니다.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "유효하지 않은 이메일 주소입니다.";
+      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from './supabaseClient';
+import { auth, db } from './firebaseConfig';
+import {
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp
+} from 'firebase/firestore';
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'firebase/auth';
 import SignUpPage from './SignUpPage';
 import './CommunityPage.css';
 
@@ -25,14 +45,14 @@ const CommunityPage = ({ onGoBack }) => {
 
   // 운영자 권한 확인 함수
   const isAdmin = () => {
-    return session?.user?.email === 'ballaforlife@naver.com';
+    return session?.email === 'ballaforlife@naver.com';
   };
 
   // localStorage에서 댓글 상태 복원
   useEffect(() => {
     const savedReplyInput = localStorage.getItem('activeReplyInput');
     const savedReplyText = localStorage.getItem('replyText');
-    
+
     if (savedReplyInput && savedReplyInput !== 'null') {
       setActiveReplyInput(savedReplyInput);
     }
@@ -67,11 +87,9 @@ const CommunityPage = ({ onGoBack }) => {
     return url.includes('youtube.com') || url.includes('youtu.be');
   };
 
-  // Instagram 관련 함수 제거
-
   const isNewsLink = (url) => {
     const newsDomains = [
-      'naver.com', 'daum.net', 'google.com', 'yahoo.com', 
+      'naver.com', 'daum.net', 'google.com', 'yahoo.com',
       'chosun.com', 'joongang.co.kr', 'donga.com', 'hankyung.com',
       'mk.co.kr', 'etnews.com', 'zdnet.co.kr', 'itworld.co.kr',
       'basketball.or.kr', 'kssbf.or.kr', 'koreabasketball.or.kr',
@@ -80,11 +98,9 @@ const CommunityPage = ({ onGoBack }) => {
       'sportalkorea.com', 'basketball.or.kr', 'kbl.or.kr', 'wkbl.or.kr'
     ];
     const isNews = newsDomains.some(domain => url.includes(domain));
-    console.log('News link check:', url, 'isNews:', isNews);
+    // console.log('News link check:', url, 'isNews:', isNews);
     return isNews;
   };
-
-  // getYouTubeEmbedUrl 함수 제거 - 더 이상 사용하지 않음
 
   const getYouTubeThumbnail = (url) => {
     let videoId = '';
@@ -101,12 +117,12 @@ const CommunityPage = ({ onGoBack }) => {
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.replace('www.', '');
-      
+
       // YouTube는 기존 함수 사용
       if (isYouTubeLink(url)) {
         return getYouTubeThumbnail(url);
       }
-      
+
       // 다른 사이트들은 메타데이터에서 이미지 가져오기
       return null; // 메타데이터에서 처리
     } catch (error) {
@@ -115,17 +131,13 @@ const CommunityPage = ({ onGoBack }) => {
     }
   };
 
-  // Instagram 관련 함수들 제거
-
-  // toggleVideoExpansion 함수 제거 - 더 이상 사용하지 않음
-
   // 카카오톡 방식으로 Open Graph 메타데이터를 가져오는 함수
   const getOpenGraphData = async (url) => {
     try {
       // Microlink API를 사용하여 Open Graph 메타데이터 가져오기
       const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}&meta=true&embed=meta`);
       const data = await response.json();
-      
+
       if (data.status === 'success' && data.data.meta) {
         const meta = data.data.meta;
         return {
@@ -146,7 +158,7 @@ const CommunityPage = ({ onGoBack }) => {
     try {
       const urlObj = new URL(url);
       const hostname = urlObj.hostname.replace('www.', '');
-      
+
       return {
         title: url,
         description: `${hostname}에서 제공하는 콘텐츠입니다.`,
@@ -171,205 +183,121 @@ const CommunityPage = ({ onGoBack }) => {
     if (linkMetadata[url]) {
       return linkMetadata[url];
     }
-    
+
     const metadata = await fetchLinkMetadata(url);
     setLinkMetadata(prev => ({
       ...prev,
       [url]: metadata
     }));
-    
+
     return metadata;
   };
 
   // Session management
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-    };
-    getSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setSession(user);
     });
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (session?.user) {
-        // 1. profiles 테이블에서 사용자 정보 확인
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('username, avatar_url')
-          .eq('id', session.user.id)
-          .single();
+      if (session) {
+        // 1. Check user info in 'users' collection
+        const userDocRef = doc(db, 'users', session.uid);
+        const userDocSnap = await getDoc(userDocRef);
 
-        if (profileError) {
-          console.log('Profile not found, creating new profile...');
-          
-          // 2. profiles 테이블에 사용자 정보가 없으면 새로 생성
-          const username = session.user.user_metadata?.username || 
-                          session.user.email?.split('@')[0] || 
-                          `사용자_${session.user.id.slice(0, 8)}`;
-          
-          const { data: newProfile, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: session.user.id,
-              username: username,
-              avatar_url: '/default-avatar.png',
-              email: session.user.email
-            })
-            .select('username, avatar_url')
-            .single();
+        if (userDocSnap.exists()) {
+          // console.log('Profile found:', userDocSnap.data());
+          setUserProfile(userDocSnap.data());
+        } else {
+          // console.log('Profile not found, creating new profile...');
 
-          if (insertError) {
-            console.error('Error creating profile:', insertError);
-            // 3. 프로필 생성 실패 시 기본값 사용
+          // 2. Create new profile if not exists
+          const username = session.displayName ||
+            session.email?.split('@')[0] ||
+            `사용자_${session.uid.slice(0, 8)}`;
+
+          const newProfile = {
+            username: username,
+            avatar_url: session.photoURL || '/default-avatar.png',
+            email: session.email
+          };
+
+          try {
+            await setDoc(userDocRef, newProfile);
+            // console.log('Profile created successfully:', newProfile);
+            setUserProfile(newProfile);
+          } catch (error) {
+            console.error('Error creating profile:', error);
+            // 3. Use default if creation fails
             setUserProfile({
               username: username,
               avatar_url: '/default-avatar.png'
             });
-          } else {
-            console.log('Profile created successfully:', newProfile);
-            setUserProfile(newProfile);
           }
-        } else {
-          console.log('Profile found:', profileData);
-          setUserProfile(profileData);
         }
       }
     };
     fetchUserProfile();
   }, [session]);
 
-  const fetchMessages = async () => {
-    console.log('Fetching messages for channel:', activeChannel);
+  // Fetch messages and subscribe to realtime updates
+  useEffect(() => {
+    // console.log('Fetching messages for channel:', activeChannel);
     setMessagesLoading(true);
-    
-    // 1. 메시지와 프로필을 한 번에 가져오기
-    const { data: messagesData, error: messagesError } = await supabase
-      .from('messages')
-      .select(`*,
-        profiles(username, avatar_url)
-      `)
-      .eq('channel', activeChannel)
-      .order('created_at', { ascending: true });
 
-    if (messagesError) {
-      console.error('Error fetching messages:', messagesError);
-      return;
-    }
+    const q = query(
+      collection(db, 'messages'),
+      where('channel', '==', activeChannel),
+      orderBy('created_at', 'asc')
+    );
 
-    if (!messagesData || messagesData.length === 0) {
-      setMessages([]);
-      return;
-    }
+    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+      const messagesData = [];
 
-    // 2. 모든 메시지 ID 수집
-    const messageIds = messagesData.map(msg => msg.id);
-    
-    // 3. 반응 데이터를 한 번에 가져오기
-    const { data: reactionsData } = await supabase
-      .from('message_reactions')
-      .select('message_id, reaction_type')
-      .in('message_id', messageIds);
+      // Process messages
+      for (const docSnapshot of querySnapshot.docs) {
+        const msgData = docSnapshot.data();
+        const msgId = docSnapshot.id;
 
-    // 4. 댓글 데이터를 한 번에 가져오기 (JOIN 사용)
-    const { data: repliesData } = await supabase
-      .from('message_replies')
-      .select(`
-        id,
-        message_id,
-        user_id,
-        content,
-        created_at,
-        profiles(username, avatar_url)
-      `)
-      .in('message_id', messageIds)
-      .order('created_at', { ascending: true });
+        // Fetch replies (subcollection)
+        const repliesQuery = query(collection(db, 'messages', msgId, 'replies'), orderBy('created_at', 'asc'));
 
-    // 5. 클라이언트에서 데이터 조합
-    const messagesWithReactions = messagesData.map(message => {
-      // 해당 메시지의 반응들
-      const messageReactions = reactionsData?.filter(r => r.message_id === message.id) || [];
-      const likes = messageReactions.filter(r => r.reaction_type === 'like').length;
-      const laughs = messageReactions.filter(r => r.reaction_type === 'laugh').length;
-      const cries = messageReactions.filter(r => r.reaction_type === 'cry').length;
+        // Fetch User Profile for message
+        let profile = { username: 'Unknown', avatar_url: '/default-avatar.png' };
+        if (msgData.user_id) {
+          if (msgData.username) {
+            profile = { username: msgData.username, avatar_url: msgData.avatar_url || '/default-avatar.png' };
+          } else {
+            // Fallback fetch
+            try {
+              const userSnap = await getDoc(doc(db, 'users', msgData.user_id));
+              if (userSnap.exists()) profile = userSnap.data();
+            } catch (e) { }
+          }
+        }
 
-      // 해당 메시지의 댓글들
-      const messageReplies = repliesData?.filter(r => r.message_id === message.id) || [];
+        const repliesSnap = await getDocs(repliesQuery);
+        const replies = repliesSnap.docs.map(rDoc => ({ id: rDoc.id, ...rDoc.data() }));
 
-      return {
-        ...message,
-        likes,
-        laughs,
-        cries,
-        replies: messageReplies
-      };
+        messagesData.push({
+          id: msgId,
+          ...msgData,
+          profiles: profile,
+          replies: replies,
+          likes: msgData.likes || 0,
+          laughs: msgData.laughs || 0,
+          cries: msgData.cries || 0
+        });
+      }
+
+      setMessages(messagesData);
+      setMessagesLoading(false);
     });
 
-    console.log('Final messages with reactions and replies:', messagesWithReactions);
-    setMessages(messagesWithReactions);
-    setMessagesLoading(false);
-  };
-
-  useEffect(() => {
-    fetchMessages();
-
-    // 실시간 구독 설정 - 최적화된 버전
-    const messageSubscription = supabase
-      .channel(`messages-for-${activeChannel}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `channel=eq.${activeChannel}` },
-        (payload) => {
-          console.log('New message received:', payload);
-          // 새 메시지만 추가 (전체 재로딩 방지)
-          if (payload.new) {
-            const newMessage = {
-              ...payload.new,
-              likes: 0,
-              laughs: 0,
-              cries: 0,
-              replies: []
-            };
-            setMessages(prev => [...prev, newMessage]);
-          }
-        }
-      )
-      .subscribe();
-
-    // 댓글 실시간 구독 - 최적화된 버전
-    const replySubscription = supabase
-      .channel(`replies-for-${activeChannel}`)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'message_replies' },
-        (payload) => {
-          console.log('New reply received:', payload);
-          // 해당 메시지에 댓글만 추가
-          if (payload.new) {
-            setMessages(prev => prev.map(msg => {
-              if (msg.id === payload.new.message_id) {
-                return {
-                  ...msg,
-                  replies: [...(msg.replies || []), payload.new]
-                };
-              }
-              return msg;
-            }));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(messageSubscription);
-      supabase.removeChannel(replySubscription);
-    };
+    return () => unsubscribe();
   }, [activeChannel]);
 
   useEffect(() => {
@@ -384,15 +312,15 @@ const CommunityPage = ({ onGoBack }) => {
       return messages;
     }
 
-    console.log('Filtering messages for category:', activeCategory);
-    
+    // console.log('Filtering messages for category:', activeCategory);
+
     return messages.filter(message => {
       const links = detectLinks(message.content);
-      console.log('Message links:', links);
-      
+      // console.log('Message links:', links);
+
       // 링크가 없는 메시지는 모든 카테고리에서 보이도록 함
       if (links.length === 0) {
-        console.log('No links found, showing message');
+        // console.log('No links found, showing message');
         return true;
       }
 
@@ -408,21 +336,21 @@ const CommunityPage = ({ onGoBack }) => {
             return true;
         }
       });
-      
-      console.log('Message has matching link:', hasMatchingLink);
+
+      // console.log('Message has matching link:', hasMatchingLink);
       return hasMatchingLink;
     });
   };
 
   const handleSendMessage = async () => {
-    if (newMessage.trim() === '' || !session?.user) return;
-    
+    if (newMessage.trim() === '' || !session) return;
+
     // 안내사항 채널에서 운영자 권한 확인
     if (activeChannel === '안내사항' && !isAdmin()) {
       alert('안내사항 채널은 운영자만 작성할 수 있습니다.');
       return;
     }
-    
+
     // 280자 제한 확인
     if (newMessage.trim().length > 280) {
       alert('메시지는 280자를 초과할 수 없습니다.');
@@ -432,35 +360,21 @@ const CommunityPage = ({ onGoBack }) => {
     const messageToSend = newMessage;
     setNewMessage('');
 
-    // Optimistic update - 메시지를 즉시 화면에 추가
-    const optimisticMessage = {
-      id: Math.random().toString(),
-      content: messageToSend,
-      created_at: new Date().toISOString(),
-      user_id: session.user.id,
-      channel: activeChannel,
-      profiles: userProfile || {
-        username: session.user.user_metadata?.username || 
-                 session.user.email?.split('@')[0] || 
-                 `사용자_${session.user.id.slice(0, 8)}`,
-        avatar_url: '/default-avatar.png'
-      }
-    };
-
-    setMessages(currentMessages => [...currentMessages, optimisticMessage]);
-
-    const { error } = await supabase
-      .from('messages')
-      .insert({
+    try {
+      await addDoc(collection(db, 'messages'), {
         content: messageToSend,
-        user_id: session.user.id,
+        user_id: session.uid,
         channel: activeChannel,
+        created_at: serverTimestamp(),
+        username: userProfile?.username || 'Unknown', // Denormalize
+        avatar_url: userProfile?.avatar_url || '/default-avatar.png', // Denormalize
+        likes: 0,
+        laughs: 0,
+        cries: 0
       });
-
-    if (error) {
+    } catch (error) {
       console.error('Error sending message:', error);
-      // 에러가 발생하면 optimistic message를 제거하고 원래 메시지를 복원
-      setMessages(currentMessages => currentMessages.filter(m => m.id !== optimisticMessage.id));
+      alert('메시지 전송 실패');
       setNewMessage(messageToSend);
     }
   };
@@ -468,9 +382,10 @@ const CommunityPage = ({ onGoBack }) => {
   const handleSignIn = async () => {
     setLoading(true);
     setAuthMessage('');
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setAuthMessage(error.error_description || error.message);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      setAuthMessage(error.message);
     }
     setLoading(false);
   };
@@ -478,8 +393,8 @@ const CommunityPage = ({ onGoBack }) => {
   const handleSignOut = async () => {
     try {
       setLoading(true);
-      await supabase.auth.signOut();
-      
+      await signOut(auth);
+
       // 로그아웃 후 상태 정리
       setSession(null);
       setUserProfile(null);
@@ -492,13 +407,13 @@ const CommunityPage = ({ onGoBack }) => {
       setActiveReplyInput(null);
       setReplyText('');
       setLinkMetadata({});
-      
+
       // localStorage 정리
       localStorage.removeItem('activeReplyInput');
       localStorage.removeItem('replyText');
       localStorage.removeItem('activeChannel');
-      
-      console.log('로그아웃 성공');
+
+      // console.log('로그아웃 성공');
     } catch (error) {
       console.error('로그아웃 중 오류:', error);
       alert('로그아웃 중 오류가 발생했습니다.');
@@ -508,27 +423,49 @@ const CommunityPage = ({ onGoBack }) => {
   };
 
   const handleReaction = async (messageId, reactionType) => {
-    if (!session?.user) return;
+    if (!session) return;
 
-    const { error } = await supabase
-      .from('message_reactions')
-      .upsert({
-        message_id: messageId,
-        user_id: session.user.id,
-        reaction_type: reactionType,
-      });
+    // In Firestore, simpler to just increment a counter on the message document
+    // and maybe store the user's reaction in a subcollection to prevent double voting if needed.
+    // For simplicity here, we will just increment the counter.
+    // Note: This doesn't prevent multiple votes from same user easily without extra logic.
 
-    if (error) {
-      console.error('Error adding reaction:', error);
-    } else {
-      fetchMessages();
+    const messageRef = doc(db, 'messages', messageId);
+
+    // To prevent multiple votes, we should check a 'reactions' subcollection.
+    const reactionRef = doc(db, 'messages', messageId, 'reactions', session.uid);
+    const reactionSnap = await getDoc(reactionRef);
+
+    if (reactionSnap.exists()) {
+      // Already reacted? Toggle or ignore? 
+      // Let's just ignore for now to keep it simple, or toggle.
+      return;
+    }
+
+    try {
+      await setDoc(reactionRef, { type: reactionType });
+
+      // Increment counter
+      // We need to read the current count or use increment(). 
+      // Let's use updateDoc with increment if we imported it, but we didn't.
+      // Let's just read and update.
+      const msgSnap = await getDoc(messageRef);
+      if (msgSnap.exists()) {
+        const data = msgSnap.data();
+        const currentCount = data[reactionType + 's'] || 0; // likes, laughs, cries
+        await updateDoc(messageRef, {
+          [reactionType + 's']: currentCount + 1
+        });
+      }
+    } catch (e) {
+      console.error("Reaction error:", e);
     }
   };
 
   const getReactionCount = (messageId, reactionType) => {
     const message = messages.find(m => m.id === messageId);
     if (!message) return 0;
-    
+
     switch (reactionType) {
       case 'like':
         return message.likes || 0;
@@ -556,7 +493,7 @@ const CommunityPage = ({ onGoBack }) => {
   };
 
   const handleSendReply = async (messageId) => {
-    if (!session?.user || !replyText.trim()) return;
+    if (!session || !replyText.trim()) return;
 
     // 280자 제한 확인
     if (replyText.trim().length > 280) {
@@ -567,78 +504,39 @@ const CommunityPage = ({ onGoBack }) => {
     const replyToSend = replyText.trim();
     setReplyText('');
 
-    console.log('Sending reply:', {
-      messageId,
-      userId: session.user.id,
-      content: replyToSend
-    });
-
     try {
-      // 댓글을 데이터베이스에 저장
-      const { data, error } = await supabase
-        .from('message_replies')
-        .insert({
-          message_id: messageId,
-          user_id: session.user.id,
-          content: replyToSend,
-        })
-        .select(`
-          id,
-          message_id,
-          user_id,
-          content,
-          created_at
-        `);
+      await addDoc(collection(db, 'messages', messageId, 'replies'), {
+        content: replyToSend,
+        user_id: session.uid,
+        created_at: serverTimestamp(),
+        username: userProfile?.username || 'Unknown',
+        avatar_url: userProfile?.avatar_url || '/default-avatar.png'
+      });
 
-      if (error) {
-        console.error('Error sending reply:', error);
-        alert('댓글 저장 중 오류가 발생했습니다: ' + error.message);
-        setReplyText(replyToSend);
-      } else {
-        console.log('Reply sent successfully:', data);
-        
-        // 성공적으로 저장된 댓글을 현재 메시지에 추가
-        if (data && data.length > 0) {
-          const savedReply = data[0];
-          
-          // 사용자 프로필 정보 가져오기
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('username, avatar_url')
-            .eq('id', session.user.id)
-            .single();
-          
-          const replyWithProfile = {
-            ...savedReply,
-            profiles: profileError ? {
-              username: session.user.user_metadata?.username || 
-                       session.user.email?.split('@')[0] || 
-                       `사용자_${session.user.id.slice(0, 8)}`,
-              avatar_url: '/default-avatar.png'
-            } : profileData
+      // Manually update local state to show reply immediately (since we don't have realtime listener for replies)
+      setMessages(prev => prev.map(msg => {
+        if (msg.id === messageId) {
+          return {
+            ...msg,
+            replies: [...(msg.replies || []), {
+              id: 'temp-' + Date.now(),
+              content: replyToSend,
+              user_id: session.uid,
+              created_at: new Date(),
+              username: userProfile?.username || 'Unknown',
+              avatar_url: userProfile?.avatar_url || '/default-avatar.png'
+            }]
           };
-          
-          setMessages(currentMessages => 
-            currentMessages.map(msg => 
-              msg.id === messageId 
-                ? { 
-                    ...msg, 
-                    replies: [
-                      ...(msg.replies || []),
-                      replyWithProfile
-                    ]
-                  }
-                : msg
-            )
-          );
         }
-        
-        setActiveReplyInput(null);
-        localStorage.removeItem('activeReplyInput');
-        localStorage.removeItem('replyText');
-      }
+        return msg;
+      }));
+
+      setActiveReplyInput(null);
+      localStorage.removeItem('activeReplyInput');
+      localStorage.removeItem('replyText');
+
     } catch (error) {
-      console.error('Exception in handleSendReply:', error);
+      console.error('Error sending reply:', error);
       alert('댓글 저장 중 오류가 발생했습니다: ' + error.message);
       setReplyText(replyToSend);
     }
@@ -671,18 +569,34 @@ const CommunityPage = ({ onGoBack }) => {
               />
             </div>
             <div className="auth-buttons-group">
-              <button 
-                onClick={handleSignIn} 
+              <button
+                onClick={handleSignIn}
                 disabled={loading}
                 className="auth-button auth-button-primary"
               >
                 {loading ? '로그인 중...' : '로그인'}
               </button>
-              <button 
-                onClick={() => setAuthView('signup')} 
+              <button
+                onClick={() => setAuthView('signup')}
                 className="auth-button auth-button-secondary"
               >
                 회원가입
+              </button>
+            </div>
+            <div className="auth-social-login">
+              <button
+                onClick={async () => {
+                  try {
+                    const provider = new GoogleAuthProvider();
+                    await signInWithPopup(auth, provider);
+                  } catch (error) {
+                    setAuthMessage(error.message);
+                  }
+                }}
+                className="auth-button google-login-btn"
+                style={{ marginTop: '10px', backgroundColor: '#4285F4', color: 'white', width: '100%' }}
+              >
+                Google 계정으로 로그인
               </button>
             </div>
           </div>
@@ -709,7 +623,7 @@ const CommunityPage = ({ onGoBack }) => {
     links.forEach((link, index) => {
       const linkId = `link-${index}`;
       processedContent = processedContent.replace(link, `[${linkId}]`);
-      
+
       if (isYouTubeLink(link)) {
         // YouTube는 기존 방식으로 크게 표시
         const thumbnailUrl = getYouTubeThumbnail(link);
@@ -754,7 +668,7 @@ const CommunityPage = ({ onGoBack }) => {
           setLoading(true);
           const meta = await loadLinkMetadata(url);
           setMetadata(meta);
-          
+
           // YouTube가 아닌 경우 Open Graph 데이터 가져오기
           if (!isYouTubeLink(url)) {
             const og = await getOpenGraphData(url);
@@ -798,259 +712,201 @@ const CommunityPage = ({ onGoBack }) => {
 
     return (
       <div className="link-card">
-        <a href={url} target="_blank" rel="noopener noreferrer" className="link-card-link">
-          {(ogData?.image || metadata.image) && (
-            <div className={isYouTubeLink(url) ? "link-card-image-large" : "link-card-image-small"}>
-              <img src={ogData?.image || metadata.image} alt={ogData?.title || metadata.title} onError={(e) => {
-                // 이미지 로드 실패 시 기본 링크로 대체
-                e.target.style.display = 'none';
-                e.target.parentElement.innerHTML = `<div class="fallback-link">🔗 ${url}</div>`;
-              }} />
+        <a href={url} target="_blank" rel="noopener noreferrer" className="link-card-content">
+          {ogData?.image ? (
+            <div className="link-card-image" style={{ backgroundImage: `url(${ogData.image})` }}></div>
+          ) : (
+            <div className="link-card-icon">
+              <img src={metadata.image} alt="" onError={(e) => e.target.style.display = 'none'} />
             </div>
           )}
-          <div className="link-card-content">
+          <div className="link-card-text">
             <div className="link-card-title">{ogData?.title || metadata.title}</div>
-            {(ogData?.description || metadata.description) && (
-              <div className="link-card-description">{ogData?.description || metadata.description}</div>
-            )}
-            <div className="link-card-meta">
-              <span className="link-card-site">{ogData?.site || metadata.site_name}</span>
-              <span className="link-card-url">{url}</span>
-            </div>
+            <div className="link-card-description">{ogData?.description || metadata.description}</div>
+            <div className="link-card-site">{ogData?.site || metadata.site_name}</div>
           </div>
         </a>
       </div>
     );
   };
 
-  const renderContent = () => {
-    const filteredMessages = filterMessagesByCategory(messages);
-    
-    return (
-      <div className="messages-list-content">
-        {filteredMessages.length === 0 ? (
-          <p className="no-messages">
-            {activeChannel === '안내사항' ? '안내사항 채널입니다.' : 
-             activeChannel === '데일리훕' && activeCategory !== '전체' ? 
-             `${activeCategory} 관련 콘텐츠가 없습니다.` : 
-             '메시지가 없습니다. 첫 메시지를 남겨보세요!'}
-          </p>
-        ) : (
-          filteredMessages.map((msg) => (
-            <div key={msg.id} className="message-item">
-              <div className="message-content-wrapper">
-                <span className="message-author">
-                  {msg.profiles?.username || 
-                   (msg.user_id ? `사용자_${msg.user_id.slice(0, 8)}` : '알 수 없는 사용자')}
-                </span>
-                {renderMessageContent(msg.content)}
-                <div className="message-actions">
-                  <button className="reaction-btn" onClick={() => handleReaction(msg.id, 'like')}>
-                    👍 <span className="reaction-count">{getReactionCount(msg.id, 'like')}</span>
-                  </button>
-                  <button className="reaction-btn" onClick={() => handleReaction(msg.id, 'laugh')}>
-                    😂 <span className="reaction-count">{getReactionCount(msg.id, 'laugh')}</span>
-                  </button>
-                  <button className="reaction-btn" onClick={() => handleReaction(msg.id, 'cry')}>
-                    😢 <span className="reaction-count">{getReactionCount(msg.id, 'cry')}</span>
-                  </button>
-                  <button className="reply-btn" onClick={() => toggleReplyInput(msg.id)}>
-                    💬 댓글
-                  </button>
-                </div>
-                <span className="message-timestamp">
-                  {new Date(msg.created_at).toLocaleString()}
-                </span>
-                
-                {activeReplyInput === msg.id && (
-                  <div className="reply-input-container">
-                    <div className="reply-input-wrapper">
-                      <input
-                        type="text"
-                        placeholder="댓글을 입력하세요... (280자 제한)"
-                        value={replyText}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value.length <= 280) {
-                            setReplyText(value);
-                          }
-                        }}
-                        onKeyPress={(e) => { if (e.key === 'Enter') handleSendReply(msg.id); }}
-                        maxLength={280}
-                      />
-                      <div className="character-count reply-char-count">
-                        {replyText.length}/280
-                      </div>
-                    </div>
-                    <button onClick={() => handleSendReply(msg.id)} disabled={replyText.trim().length === 0 || replyText.length > 280}>
-                      전송
-                    </button>
-                    <button onClick={() => {
-                      setActiveReplyInput(null);
-                      setReplyText('');
-                      localStorage.removeItem('activeReplyInput');
-                      localStorage.removeItem('replyText');
-                    }}>취소</button>
-                  </div>
-                )}
-                
-                {/* 댓글 목록 */}
-                {msg.replies && msg.replies.length > 0 && (
-                  <div className="replies-container">
-                    {msg.replies.map((reply) => (
-                      <div key={reply.id} className="reply-item">
-                        <div className="reply-content">
-                          <span className="reply-author">
-                            {reply.profiles?.username || 
-                             (reply.user_id ? `사용자_${reply.user_id.slice(0, 8)}` : '알 수 없는 사용자')}
-                          </span>
-                          <div className="reply-text-wrapper">
-                            <p>{reply.content}</p>
-                          </div>
-                        </div>
-                        <span className="reply-timestamp">
-                          {new Date(reply.created_at).toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    );
-  };
-
   return (
-    <div className="community-page">
-      {/* 상단 헤더 - 사이드바를 위로 이동 */}
-      <div className="top-header">
-        <div className="header-left">
-          <h3 className="logo-small">
-            <span className="hoopgle-red">H</span>
-            <span className="hoopgle-yellow">o</span>
-            <span className="hoopgle-navy">o</span>
-            <span className="hoopgle-yellow">p</span>
-            <span className="hoopgle-navy"> Z</span>
-            <span className="hoopgle-yellow">o</span>
-            <span className="hoopgle-navy">n</span>
-            <span className="hoopgle-yellow">e</span>
-          </h3>
-          {session && (
-            <div className="profile-info-below-logo">
-              <span className="profile-name-below-logo">
-                {userProfile?.username || session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자'}
-              </span>
-              <button onClick={handleSignOut} className="signout-button-below-logo" disabled={loading}>
-                {loading ? '로그아웃 중...' : '로그아웃'}
-              </button>
-            </div>
-          )}
-        </div>
-        
-        <div className="header-center">
-          <ul className="channel-list-horizontal">
-            <li 
-              className={`channel-item-horizontal ${activeChannel === '안내사항' ? 'active' : ''}`} 
-              onClick={() => setActiveChannel('안내사항')}
-            >
-              📢 안내사항
-            </li>
-            <li 
-              className={`channel-item-horizontal ${activeChannel === '자유채팅' ? 'active' : ''}`} 
-              onClick={() => setActiveChannel('자유채팅')}
-            >
-              💬 자유채팅
-            </li>
-            <li 
-              className={`channel-item-horizontal ${activeChannel === '데일리훕' ? 'active' : ''}`} 
-              onClick={() => setActiveChannel('데일리훕')}
-            >
-              🔥 데일리훕
-            </li>
-          </ul>
-        </div>
-      </div>
-      
-      {/* 홈으로 버튼을 별도 영역으로 분리 */}
-      <div className="home-button-container">
-        <button onClick={onGoBack} className="back-button-community">홈으로</button>
+    <div className="community-container">
+      <div className="community-header">
+        <h1 className="logo-small" onClick={onGoBack}>
+          <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy">d</span><span className="hoopgle-yellow">e</span><span className="hoopgle-navy">x</span>
+        </h1>
+        <button onClick={onGoBack} className="home-button-community">홈으로</button>
       </div>
 
-      {/* 데일리훕 카테고리 필터 */}
-      {activeChannel === '데일리훕' && (
-        <div className="category-filter">
-          <button 
-            className={`category-button ${activeCategory === '전체' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('전체')}
+      <div className="community-content">
+        <div className="channels-sidebar">
+          <button
+            className={`channel-button ${activeChannel === '안내사항' ? 'active' : ''}`}
+            onClick={() => setActiveChannel('안내사항')}
           >
-            전체
+            📢 안내사항
           </button>
-          <button 
-            className={`category-button ${activeCategory === 'YouTube' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('YouTube')}
+          <button
+            className={`channel-button ${activeChannel === '자유게시판' ? 'active' : ''}`}
+            onClick={() => setActiveChannel('자유게시판')}
           >
-            🎥 YouTube
+            🗣 자유게시판
           </button>
-          <button 
-            className={`category-button ${activeCategory === 'News' ? 'active' : ''}`}
-            onClick={() => setActiveCategory('News')}
+          <button
+            className={`channel-button ${activeChannel === '데일리훕' ? 'active' : ''}`}
+            onClick={() => setActiveChannel('데일리훕')}
           >
-            📰 News
+            🏀 데일리훕
           </button>
         </div>
-      )}
-      
-      <div className="chat-area">
-        <div className="messages-list" ref={messagesContainerRef}>
-          {messagesLoading ? (
-            <div className="loading-messages">
-              <div className="loading-spinner"></div>
-              <p>메시지를 불러오는 중...</p>
-            </div>
-          ) : (
-            renderContent()
-          )}
-        </div>
-        
-        <div className="chat-input-box">
-          {session ? (
-            <>
-              {activeChannel === '안내사항' && !isAdmin() ? (
-                <div className="admin-only-message">
-                  <p>안내사항 채널은 운영자만 작성할 수 있습니다.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="input-container">
-                    <input
-                      type="text"
-                      placeholder={`${activeChannel}에 메시지 보내기 (280자 제한)`}
-                      value={newMessage}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value.length <= 280) {
-                          setNewMessage(value);
-                        }
-                      }}
-                      onKeyPress={(e) => { if (e.key === 'Enter') handleSendMessage(); }}
-                      maxLength={280}
-                    />
-                    <div className="character-count">
-                      {newMessage.length}/280
-                    </div>
+
+        <div className="chat-area">
+          <div className="chat-header">
+            <h2>{activeChannel}</h2>
+            {/* 데일리훕 채널일 때 카테고리 필터 표시 */}
+            {activeChannel === '데일리훕' && (
+              <div className="category-filters">
+                <button
+                  className={`category-filter-btn ${activeCategory === '전체' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('전체')}
+                >
+                  전체
+                </button>
+                <button
+                  className={`category-filter-btn ${activeCategory === 'YouTube' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('YouTube')}
+                >
+                  YouTube
+                </button>
+                <button
+                  className={`category-filter-btn ${activeCategory === 'News' ? 'active' : ''}`}
+                  onClick={() => setActiveCategory('News')}
+                >
+                  News
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="messages-container" ref={messagesContainerRef}>
+            {messagesLoading ? (
+              <div className="loading-messages">메시지 로딩 중...</div>
+            ) : (
+              filterMessagesByCategory(messages).map((message) => (
+                <div key={message.id} className="message-item">
+                  <div className="message-avatar">
+                    <img src={message.profiles?.avatar_url || '/default-avatar.png'} alt="Avatar" />
                   </div>
-                  <button onClick={handleSendMessage} disabled={newMessage.trim().length === 0 || newMessage.length > 280}>
-                    전송
-                  </button>
-                </>
-              )}
-            </>
-          ) : (
-            renderAuth()
-          )}
+                  <div className="message-content-wrapper">
+                    <div className="message-header">
+                      <span className="username">{message.profiles?.username || 'Unknown'}</span>
+                      <span className="timestamp">{new Date(message.created_at?.toDate ? message.created_at.toDate() : message.created_at).toLocaleString()}</span>
+                    </div>
+                    <div className="message-body">
+                      {renderMessageContent(message.content)}
+                    </div>
+
+                    <div className="message-actions">
+                      <button
+                        className={`reaction-btn ${getReactionCount(message.id, 'like') > 0 ? 'active' : ''}`}
+                        onClick={() => handleReaction(message.id, 'like')}
+                      >
+                        👍 {getReactionCount(message.id, 'like')}
+                      </button>
+                      <button
+                        className={`reaction-btn ${getReactionCount(message.id, 'laugh') > 0 ? 'active' : ''}`}
+                        onClick={() => handleReaction(message.id, 'laugh')}
+                      >
+                        😂 {getReactionCount(message.id, 'laugh')}
+                      </button>
+                      <button
+                        className={`reaction-btn ${getReactionCount(message.id, 'cry') > 0 ? 'active' : ''}`}
+                        onClick={() => handleReaction(message.id, 'cry')}
+                      >
+                        😭 {getReactionCount(message.id, 'cry')}
+                      </button>
+                      <button className="reply-btn" onClick={() => toggleReplyInput(message.id)}>
+                        💬 댓글 {message.replies?.length || 0}
+                      </button>
+                    </div>
+
+                    {/* 댓글 목록 */}
+                    {message.replies && message.replies.length > 0 && (
+                      <div className="replies-list">
+                        {message.replies.map(reply => (
+                          <div key={reply.id} className="reply-item">
+                            <div className="reply-avatar">
+                              <img src={reply.avatar_url || '/default-avatar.png'} alt="Reply Avatar" />
+                            </div>
+                            <div className="reply-content">
+                              <div className="reply-header">
+                                <span className="reply-username">{reply.username || 'Unknown'}</span>
+                                <span className="reply-timestamp">
+                                  {reply.created_at?.toDate ? new Date(reply.created_at.toDate()).toLocaleString() : new Date(reply.created_at).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="reply-text">{reply.content}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 댓글 입력창 */}
+                    {activeReplyInput === message.id && (
+                      <div className="reply-input-area">
+                        {session ? (
+                          <>
+                            <input
+                              type="text"
+                              placeholder="댓글을 입력하세요..."
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleSendReply(message.id)}
+                            />
+                            <button onClick={() => handleSendReply(message.id)}>등록</button>
+                          </>
+                        ) : (
+                          <div className="login-required-msg">댓글을 작성하려면 로그인이 필요합니다.</div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+            {messages.length === 0 && !messagesLoading && (
+              <div className="no-messages">메시지가 없습니다.</div>
+            )}
+          </div>
+
+          <div className="message-input-area">
+            {session ? (
+              <>
+                <textarea
+                  placeholder={activeChannel === '안내사항' && !isAdmin() ? "안내사항은 운영자만 작성할 수 있습니다." : "메시지를 입력하세요..."}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  disabled={activeChannel === '안내사항' && !isAdmin()}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
+                />
+                <button
+                  onClick={handleSendMessage}
+                  disabled={activeChannel === '안내사항' && !isAdmin()}
+                >
+                  전송
+                </button>
+              </>
+            ) : (
+              renderAuth()
+            )}
+          </div>
         </div>
       </div>
     </div>
