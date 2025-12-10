@@ -391,6 +391,7 @@ function App() {
   const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store high school rankings
   const [selectedPlayerAvgStats, setSelectedPlayerAvgStats] = useState(null);
   const [session, setSession] = useState(null); // Add session state for CommunityPage
+  const [isLoading, setIsLoading] = useState(false); // Loading state for search
 
   // Helper function to find player's ranking data
   const findPlayerRanking = (playerName, playerTeam) => {
@@ -834,6 +835,8 @@ function App() {
     e.preventDefault();
     if (!searchTerm.trim()) return;
 
+    setIsLoading(true); // Start loading
+
     // Reset states
     setUniquePlayers([]);
     setDisplayRecords([]);
@@ -884,6 +887,8 @@ function App() {
         }
       } catch (error) {
         console.error('Error searching team:', error);
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // Player Search
@@ -919,7 +924,7 @@ function App() {
             setSelectionMode('player');
           } else {
             // Only one player found, select automatically
-            handlePlayerSelect(unique[0]);
+            await handlePlayerSelect(unique[0]);
           }
           setShowResults(true);
         } else {
@@ -927,6 +932,8 @@ function App() {
         }
       } catch (error) {
         console.error('Error searching player:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -963,7 +970,38 @@ function App() {
         if (rankingData) {
           setSelectedPlayerAvgStats(rankingData);
         } else {
-          setSelectedPlayerAvgStats(null);
+          // Fallback: calculate averages if not found in rankings
+          let totalPoints = 0, totalAssists = 0, totalRebounds = 0, totalBlocks = 0, totalSteals = 0;
+          let gamesPlayed = 0;
+
+          records.forEach(r => {
+            // Basic validation for games played - if they have stats, they played
+            gamesPlayed++;
+
+            let q1 = parseInt(r['1Q 득점']) || 0;
+            let q2 = parseInt(r['2Q 득점']) || 0;
+            let q3 = parseInt(r['3Q 득점']) || 0;
+            let q4 = parseInt(r['4Q 득점']) || 0;
+            let ot = parseInt(r['연장 득점']) || 0;
+
+            totalPoints += (q1 + q2 + q3 + q4 + ot);
+            totalAssists += parseInt(r['어시스트']) || 0;
+            totalRebounds += parseInt(r['총 리바운드']) || 0;
+            totalBlocks += parseInt(r['블록슛']) || 0;
+            totalSteals += parseInt(r['스틸']) || 0;
+          });
+
+          if (gamesPlayed > 0) {
+            setSelectedPlayerAvgStats({
+              avgPoints: (totalPoints / gamesPlayed).toFixed(1),
+              avgAssists: (totalAssists / gamesPlayed).toFixed(1),
+              avgRebounds: (totalRebounds / gamesPlayed).toFixed(1),
+              avgBlocks: (totalBlocks / gamesPlayed).toFixed(1),
+              avgSteals: (totalSteals / gamesPlayed).toFixed(1)
+            });
+          } else {
+            setSelectedPlayerAvgStats(null);
+          }
         }
       }
     } catch (error) {
@@ -1026,13 +1064,22 @@ function App() {
               </div>
             )}
 
-            {!needsSelection && displayRecords.length === 0 && (
-              <div className="no-results">
-                <p>검색 결과가 없습니다.</p>
+            {isLoading ? (
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>검색중...</p>
               </div>
+            ) : (
+              <>
+                {!needsSelection && displayRecords.length === 0 && (
+                  <div className="no-results">
+                    <p>검색 결과가 없습니다.</p>
+                  </div>
+                )}
+              </>
             )}
 
-            {displayRecords.length > 0 && (
+            {!isLoading && displayRecords.length > 0 && (
               <>
                 <div className="player-header">
                   <h2>
@@ -1133,8 +1180,36 @@ function App() {
                           <span className="value">{record['블록슛']}</span>
                         </div>
                         <div className="card-item">
-                          <span className="label">3점슛</span>
+                          <span className="label">3점슛 (성공/시도)</span>
                           <span className="value">{record['3점슛 성공']}/{record['3점슛 시도']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">3점 성공률</span>
+                          <span className="value">{record['3점 성공률(%)']}%</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">2점슛 (성공/시도)</span>
+                          <span className="value">{record['2점슛 성공']}/{record['2점슛 시도']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">2점 성공률</span>
+                          <span className="value">{record['2점 성공률(%)']}%</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">자유투 (성공/시도)</span>
+                          <span className="value">{record['자유투 성공']}/{record['자유투 시도']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">자유투 성공률</span>
+                          <span className="value">{record['자유투 성공률(%)']}%</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">파울</span>
+                          <span className="value">{record['총 파울']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">턴오버</span>
+                          <span className="value">{record['턴오버']}</span>
                         </div>
                       </div>
                     </div>
