@@ -11,6 +11,24 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [rankingType, setRankingType] = useState('avgPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
+  const [isLoading, setIsLoading] = useState(true); // Loading state for rankings
+
+  // Simulate loading or check if data is available
+  useEffect(() => {
+    if (middleSchoolRankings.all.length > 0 || highSchoolRankings.all.length > 0) {
+      setIsLoading(false);
+    } else {
+      // If data is empty, it might still be fetching in the parent. 
+      // However, since we pass props, we rely on parent's fetch. 
+      // But we can show loading if the lists are empty initially.
+      // A better approach is to pass 'isLoading' from parent or simply assume loading if empty.
+      // For now, let's use a timeout if it stays empty too long, or better, 
+      // let's assume if props are empty arrays, we are loading? 
+      // Actually, parent does the fetch. Let's add an effect to turn off loading when data arrives.
+      const timer = setTimeout(() => setIsLoading(false), 2000); // Fallback timeout
+      return () => clearTimeout(timer);
+    }
+  }, [middleSchoolRankings, highSchoolRankings]);
 
   const getSortedRankings = (rankings) => {
     let sorted = [...rankings];
@@ -46,6 +64,15 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
         player.team.toLowerCase().includes(searchTerm.toLowerCase())
       )
       .slice(0, 50); // Limit to top 50 players
+
+    if (isLoading) {
+      return (
+        <div className="loading-container" style={{ padding: '50px 0' }}>
+          <div className="loading-spinner"></div>
+          <p>랭킹 불러오는 중...</p>
+        </div>
+      );
+    }
 
     if (filteredRankings.length === 0) {
       return <p className="no-results-message">검색 결과가 없습니다.</p>;
@@ -639,6 +666,7 @@ function App() {
   // Fetch rankings on component mount
   useEffect(() => {
     const fetchRankings = async () => {
+      setIsLoading(true); // Start loading in parent
       let allRecords = [];
 
       try {
@@ -670,6 +698,7 @@ function App() {
       const { middleSchool, highSchool } = calculateRankingsBySchoolType(processedAllRecords);
       setMiddleSchoolRankings(middleSchool);
       setHighSchoolRankings(highSchool);
+      setIsLoading(false); // Stop loading after data is processed
     };
 
     fetchRankings();
