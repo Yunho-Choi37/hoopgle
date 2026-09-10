@@ -1,5 +1,6 @@
 {
     "hosting": {
+        "site": "hoopgle-hoopdex",
         "public": "build",
         "ignore": [
             "firebase.json",
