@@ -5,7 +5,7 @@ import { collection, getDocs, query } from 'firebase/firestore';
 import './App.css';
 
 // RankingsPage Component Definition
-const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) => {
+const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, selectedSeason, onSelectSeason }) => {
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
   const [middleSchoolSubTab, setMiddleSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
@@ -190,6 +190,21 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome }) =>
           <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
         </h1>
         <button onClick={onGoHome} className="home-button-rankings">홈으로</button>
+      </div>
+
+      <div className="season-switcher-container">
+        <button
+          className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
+          onClick={() => onSelectSeason('2026')}
+        >
+          2026 시즌 (최신)
+        </button>
+        <button
+          className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
+          onClick={() => onSelectSeason('2025')}
+        >
+          2025 시즌
+        </button>
       </div>
 
       <div className="ranking-tabs">
@@ -403,6 +418,8 @@ const processRecords = (records) => {
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSeason, setSelectedSeason] = useState('2026'); // '2026' or '2025'
+  const [cachedRecords, setCachedRecords] = useState([]); // In-memory cache for all records
   const [uniquePlayers, setUniquePlayers] = useState([]);
   const [displayRecords, setDisplayRecords] = useState([]);
   const [showResults, setShowResults] = useState(false);
@@ -663,46 +680,73 @@ function App() {
     }
   }, [selectedCompetition, selectedPlayerRecords]);
 
-  // Fetch rankings on component mount
-  useEffect(() => {
-    const fetchRankings = async () => {
-      setIsLoading(true); // Start loading in parent
-      let allRecords = [];
+  // Fetch and cache all records from local 2026 data and Firestore
+  const fetchRecords = async () => {
+    if (cachedRecords.length > 0) return cachedRecords;
+    setIsLoading(true);
+    let allRecords = [];
 
-      try {
-        // Fetch all records from 'player_records' collection
-        const q = query(collection(db, 'player_records'));
-        const querySnapshot = await getDocs(q);
-
-        querySnapshot.forEach((doc) => {
-          allRecords.push(doc.data());
-        });
-
-      } catch (error) {
-        console.error('Error fetching records:', error);
+    // 1. Load 2026 Spring data from bundled static JSON (Super fast & 0 quota cost!)
+    try {
+      const res = await fetch('/data/spring_2026.json');
+      if (res.ok) {
+        const spring2026 = await res.json();
+        allRecords = allRecords.concat(spring2026);
       }
+    } catch (err) {
+      console.warn('Could not load local spring_2026.json:', err);
+    }
 
-      // Process all records to calculate total points for each game
-      const processedAllRecords = allRecords.map(p => {
-        const q1 = parseInt(p['1Q 득점']) || 0;
-        const q2 = parseInt(p['2Q 득점']) || 0;
-        const q3 = parseInt(p['3Q 득점']) || 0;
-        const q4 = parseInt(p['4Q 득점']) || 0;
-        const ot = parseInt(p['연장 득점']) || 0;
-        return {
-          ...p,
-          '총득점': q1 + q2 + q3 + q4 + ot,
-        };
+    // 2. Load 2025 records from Firestore
+    try {
+      const q = query(collection(db, 'player_records'));
+      const querySnapshot = await getDocs(q);
+
+      querySnapshot.forEach((doc) => {
+        const d = doc.data();
+        if (!d.id || !allRecords.some(r => r.id === d.id)) {
+          allRecords.push(d);
+        }
       });
+    } catch (error) {
+      console.warn('Firestore fetch notice (quota/network):', error.message || error);
+    }
 
-      const { middleSchool, highSchool } = calculateRankingsBySchoolType(processedAllRecords);
+    // Process all records to calculate total points and assign season
+    const processedAllRecords = allRecords.map(p => {
+      const q1 = parseInt(p['1Q 득점']) || 0;
+      const q2 = parseInt(p['2Q 득점']) || 0;
+      const q3 = parseInt(p['3Q 득점']) || 0;
+      const q4 = parseInt(p['4Q 득점']) || 0;
+      const ot = parseInt(p['연장 득점']) || 0;
+      const season = p['시즌'] ? String(p['시즌']) : (p['대회명'] && String(p['대회명']).includes('2026') ? '2026' : '2025');
+
+      return {
+        ...p,
+        '총득점': q1 + q2 + q3 + q4 + ot,
+        season: season,
+      };
+    });
+
+    setCachedRecords(processedAllRecords);
+    setIsLoading(false);
+    return processedAllRecords;
+  };
+
+  // Initial load
+  useEffect(() => {
+    fetchRecords();
+  }, []);
+
+  // Update rankings whenever cachedRecords or selectedSeason changes
+  useEffect(() => {
+    if (cachedRecords.length > 0) {
+      const seasonRecords = cachedRecords.filter(r => r.season === selectedSeason);
+      const { middleSchool, highSchool } = calculateRankingsBySchoolType(seasonRecords);
       setMiddleSchoolRankings(middleSchool);
       setHighSchoolRankings(highSchool);
-      setIsLoading(false); // Stop loading after data is processed
-    };
-
-    fetchRankings();
-  }, []);
+    }
+  }, [cachedRecords, selectedSeason]);
 
   const handleGoHome = () => {
     setShowResults(false);
@@ -879,37 +923,41 @@ function App() {
     setSelectedPlayerAvgStats(null);
 
     // Check if the search term ends with '중' or '고' or '학교' (Team Search)
-    if (searchTerm.endsWith('중') || searchTerm.endsWith('고') || searchTerm.endsWith('학교')) {
-      setIsTeamSearchMode(true);
-      // Fetch all records for the team
-      try {
-        const q = query(collection(db, 'player_records')); // In a real app, use where clause
-        const querySnapshot = await getDocs(q);
-        let allRecords = [];
-        querySnapshot.forEach((doc) => {
-          allRecords.push(doc.data());
-        });
+    const cleanedSearchTerm = searchTerm.trim();
+    if (!cleanedSearchTerm) {
+      setIsLoading(false);
+      return;
+    }
 
-        const teamRecords = allRecords.filter(r => r['소속팀'].includes(searchTerm));
+    if (cleanedSearchTerm.endsWith('중') || cleanedSearchTerm.endsWith('고') || cleanedSearchTerm.endsWith('학교')) {
+      setIsTeamSearchMode(true);
+      try {
+        const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
+        // Search in selected season first, fallback to all records if none found
+        let teamRecords = allRecords.filter(r => r.season === selectedSeason && r['소속팀'] && r['소속팀'].includes(cleanedSearchTerm));
+        if (teamRecords.length === 0) {
+          teamRecords = allRecords.filter(r => r['소속팀'] && r['소속팀'].includes(cleanedSearchTerm));
+        }
 
         if (teamRecords.length > 0) {
           // Extract unique players from the team records
           const players = [];
           const seen = new Set();
           teamRecords.forEach(r => {
-            const key = `${r['선수명']}_${r['등번호']}`;
+            const key = `${r['선수명']}_${r['등번호']}_${r['소속팀']}`;
             if (!seen.has(key)) {
               seen.add(key);
               players.push({
                 name: r['선수명'],
                 team: r['소속팀'],
-                jersey: r['등번호']
+                jersey: r['등번호'],
+                season: r.season
               });
             }
           });
           setUniquePlayers(players);
           setNeedsSelection(true);
-          setSelectionMode('player'); // Even in team search, we select a player to view details
+          setSelectionMode('player');
           setShowResults(true);
         } else {
           setShowResults(true); // Show "no results" message
@@ -922,27 +970,24 @@ function App() {
     } else {
       // Player Search
       try {
-        const q = query(collection(db, 'player_records')); // In a real app, use where clause
-        const querySnapshot = await getDocs(q);
-        let allRecords = [];
-        querySnapshot.forEach((doc) => {
-          allRecords.push(doc.data());
-        });
-
-        const playerRecords = allRecords.filter(r => r['선수명'] === searchTerm);
+        const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
+        let playerRecords = allRecords.filter(r => r.season === selectedSeason && r['선수명'] && r['선수명'].trim() === cleanedSearchTerm);
+        if (playerRecords.length === 0) {
+          playerRecords = allRecords.filter(r => r['선수명'] && r['선수명'].trim() === cleanedSearchTerm);
+        }
 
         if (playerRecords.length > 0) {
-          // Check for duplicate players (same name, different team or jersey)
           const unique = [];
           const seen = new Set();
           playerRecords.forEach(r => {
-            const key = `${r['소속팀']}_${r['등번호']}`;
+            const key = `${r['소속팀']}_${r['등번호']}_${r['선수명']}`;
             if (!seen.has(key)) {
               seen.add(key);
               unique.push({
                 name: r['선수명'],
                 team: r['소속팀'],
-                jersey: r['등번호']
+                jersey: r['등번호'],
+                season: r.season
               });
             }
           });
@@ -952,7 +997,6 @@ function App() {
             setNeedsSelection(true);
             setSelectionMode('player');
           } else {
-            // Only one player found, select automatically
             await handlePlayerSelect(unique[0]);
           }
           setShowResults(true);
@@ -968,19 +1012,13 @@ function App() {
   };
 
   const handlePlayerSelect = async (player) => {
-    // Fetch all records for the selected player
+    // Filter records for the selected player from memory cache
     try {
-      const q = query(collection(db, 'player_records')); // In a real app, use where clause
-      const querySnapshot = await getDocs(q);
-      let allRecords = [];
-      querySnapshot.forEach((doc) => {
-        allRecords.push(doc.data());
-      });
-
+      const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
       const records = allRecords.filter(r =>
         r['선수명'] === player.name &&
         r['소속팀'] === player.team &&
-        r['등번호'] === player.jersey
+        String(r['등번호']) === String(player.jersey)
       );
 
       if (records.length > 0) {
@@ -1045,6 +1083,8 @@ function App() {
         middleSchoolRankings={middleSchoolRankings}
         highSchoolRankings={highSchoolRankings}
         onGoHome={handleGoHome}
+        selectedSeason={selectedSeason}
+        onSelectSeason={setSelectedSeason}
       />
     );
   }
@@ -1259,6 +1299,22 @@ function App() {
         <h1 className="logo">
           <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
         </h1>
+        <div className="season-switcher-container">
+          <button 
+            type="button"
+            className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
+            onClick={() => setSelectedSeason('2026')}
+          >
+            2026 시즌 (최신)
+          </button>
+          <button 
+            type="button"
+            className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
+            onClick={() => setSelectedSeason('2025')}
+          >
+            2025 시즌
+          </button>
+        </div>
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-bar">
             <input
