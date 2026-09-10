@@ -418,7 +418,8 @@ const processRecords = (records) => {
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSeason, setSelectedSeason] = useState('2026'); // '2026' or '2025'
+  const [selectedSeason, setSelectedSeason] = useState('2026'); // '2026' or '2025' or 'all'
+  const [playerSeasonFilter, setPlayerSeasonFilter] = useState('2026'); // '2026', '2025', 'all'
   const [cachedRecords, setCachedRecords] = useState([]); // In-memory cache for all records
   const [uniquePlayers, setUniquePlayers] = useState([]);
   const [displayRecords, setDisplayRecords] = useState([]);
@@ -436,6 +437,33 @@ function App() {
   const [selectedPlayerAvgStats, setSelectedPlayerAvgStats] = useState(null);
   const [session, setSession] = useState(null); // Add session state for CommunityPage
   const [isLoading, setIsLoading] = useState(false); // Loading state for search
+
+  // Helper function to calculate average stats for a given set of records
+  const calculateAvgStatsForRecords = (records) => {
+    if (!records || records.length === 0) return null;
+    let totalPoints = 0, totalAssists = 0, totalRebounds = 0, totalBlocks = 0, totalSteals = 0;
+    records.forEach(r => {
+      let q1 = parseInt(r['1Q 득점']) || 0;
+      let q2 = parseInt(r['2Q 득점']) || 0;
+      let q3 = parseInt(r['3Q 득점']) || 0;
+      let q4 = parseInt(r['4Q 득점']) || 0;
+      let ot = parseInt(r['연장 득점']) || 0;
+      totalPoints += (q1 + q2 + q3 + q4 + ot);
+      totalAssists += parseInt(r['어시스트']) || 0;
+      totalRebounds += parseInt(r['총 리바운드']) || 0;
+      totalBlocks += parseInt(r['블록슛']) || 0;
+      totalSteals += parseInt(r['스틸']) || 0;
+    });
+    const gamesPlayed = records.length;
+    return {
+      avgPoints: (totalPoints / gamesPlayed).toFixed(1),
+      avgAssists: (totalAssists / gamesPlayed).toFixed(1),
+      avgRebounds: (totalRebounds / gamesPlayed).toFixed(1),
+      avgBlocks: (totalBlocks / gamesPlayed).toFixed(1),
+      avgSteals: (totalSteals / gamesPlayed).toFixed(1),
+      gamesPlayed
+    };
+  };
 
   // Helper function to find player's ranking data
   const findPlayerRanking = (playerName, playerTeam) => {
@@ -670,15 +698,28 @@ function App() {
     return Object.values(rankedPlayers);
   };
 
-  // Effect to filter displayRecords based on selectedCompetition and selectedPlayerRecords
+  // Effect to filter displayRecords based on selectedCompetition, playerSeasonFilter and selectedPlayerRecords
   useEffect(() => {
     if (selectedPlayerRecords.length > 0) {
-      const filteredRecords = selectedCompetition === '전체'
+      // 1. Filter by player season
+      const seasonFiltered = playerSeasonFilter === 'all'
         ? selectedPlayerRecords
-        : selectedPlayerRecords.filter(record => record['대회명'] === selectedCompetition);
-      setDisplayRecords(processRecords(filteredRecords));
+        : selectedPlayerRecords.filter(r => (r.season || '2025') === playerSeasonFilter);
+
+      // Extract unique competitions for this player in this season
+      const comps = ['전체', ...new Set(seasonFiltered.map(r => r['대회명']))];
+      setAvailableCompetitions(comps);
+
+      // 2. Filter by competition
+      const activeComp = comps.includes(selectedCompetition) ? selectedCompetition : '전체';
+      const compFiltered = activeComp === '전체'
+        ? seasonFiltered
+        : seasonFiltered.filter(record => record['대회명'] === activeComp);
+
+      setDisplayRecords(processRecords(compFiltered));
+      setSelectedPlayerAvgStats(calculateAvgStatsForRecords(compFiltered.length > 0 ? compFiltered : seasonFiltered));
     }
-  }, [selectedCompetition, selectedPlayerRecords]);
+  }, [selectedCompetition, selectedPlayerRecords, playerSeasonFilter]);
 
   // Fetch and cache all records from local 2026 data and Firestore
   const fetchRecords = async () => {
@@ -1012,7 +1053,6 @@ function App() {
   };
 
   const handlePlayerSelect = async (player) => {
-    // Filter records for the selected player from memory cache
     try {
       const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
       const records = allRecords.filter(r =>
@@ -1024,52 +1064,20 @@ function App() {
       if (records.length > 0) {
         setSelectedPlayerRecords(records); // Store all records
 
-        // Extract unique competitions for this player
-        const competitions = ['전체', ...new Set(records.map(r => r['대회명']))];
-        setAvailableCompetitions(competitions);
-        setSelectedCompetition('전체'); // Default to '전체'
+        // Set initial season filter: if user selected a season and player has it, use it; otherwise auto-select
+        const has2026 = records.some(r => r.season === '2026');
+        const has2025 = records.some(r => (r.season || '2025') === '2025');
 
-        setDisplayRecords(processRecords(records));
-        setNeedsSelection(false);
-
-        // Find and set average stats
-        const rankingData = findPlayerRanking(player.name, player.team);
-        if (rankingData) {
-          setSelectedPlayerAvgStats(rankingData);
-        } else {
-          // Fallback: calculate averages if not found in rankings
-          let totalPoints = 0, totalAssists = 0, totalRebounds = 0, totalBlocks = 0, totalSteals = 0;
-          let gamesPlayed = 0;
-
-          records.forEach(r => {
-            // Basic validation for games played - if they have stats, they played
-            gamesPlayed++;
-
-            let q1 = parseInt(r['1Q 득점']) || 0;
-            let q2 = parseInt(r['2Q 득점']) || 0;
-            let q3 = parseInt(r['3Q 득점']) || 0;
-            let q4 = parseInt(r['4Q 득점']) || 0;
-            let ot = parseInt(r['연장 득점']) || 0;
-
-            totalPoints += (q1 + q2 + q3 + q4 + ot);
-            totalAssists += parseInt(r['어시스트']) || 0;
-            totalRebounds += parseInt(r['총 리바운드']) || 0;
-            totalBlocks += parseInt(r['블록슛']) || 0;
-            totalSteals += parseInt(r['스틸']) || 0;
-          });
-
-          if (gamesPlayed > 0) {
-            setSelectedPlayerAvgStats({
-              avgPoints: (totalPoints / gamesPlayed).toFixed(1),
-              avgAssists: (totalAssists / gamesPlayed).toFixed(1),
-              avgRebounds: (totalRebounds / gamesPlayed).toFixed(1),
-              avgBlocks: (totalBlocks / gamesPlayed).toFixed(1),
-              avgSteals: (totalSteals / gamesPlayed).toFixed(1)
-            });
-          } else {
-            setSelectedPlayerAvgStats(null);
-          }
+        let initialSeason = selectedSeason;
+        if (selectedSeason === '2026' && !has2026 && has2025) {
+          initialSeason = '2025';
+        } else if (selectedSeason === '2025' && !has2025 && has2026) {
+          initialSeason = '2026';
         }
+
+        setPlayerSeasonFilter(initialSeason);
+        setSelectedCompetition('전체');
+        setNeedsSelection(false);
       }
     } catch (error) {
       console.error('Error fetching player details:', error);
@@ -1118,17 +1126,82 @@ function App() {
             </form>
           </div>
 
+          <div className="results-season-bar">
+            <span className="season-label-tag">시즌 선택:</span>
+            <button
+              type="button"
+              className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedSeason('2026');
+                setPlayerSeasonFilter('2026');
+                setSelectedCompetition('전체');
+              }}
+            >
+              2026 시즌 (최신)
+            </button>
+            <button
+              type="button"
+              className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedSeason('2025');
+                setPlayerSeasonFilter('2025');
+                setSelectedCompetition('전체');
+              }}
+            >
+              2025 시즌
+            </button>
+            <button
+              type="button"
+              className={`season-tab ${selectedSeason === 'all' ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedSeason('all');
+                setPlayerSeasonFilter('all');
+                setSelectedCompetition('전체');
+              }}
+            >
+              전체 시즌
+            </button>
+          </div>
+
           <div className="results-container">
             {needsSelection && (
               <div className="selection-container">
+                <div className="season-switcher-container" style={{ margin: '0 auto 16px' }}>
+                  <button
+                    type="button"
+                    className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
+                    onClick={() => setSelectedSeason('2026')}
+                  >
+                    2026 시즌 선수 ({uniquePlayers.filter(p => p.season === '2026').length}명)
+                  </button>
+                  <button
+                    type="button"
+                    className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
+                    onClick={() => setSelectedSeason('2025')}
+                  >
+                    2025 시즌 선수 ({uniquePlayers.filter(p => (p.season || '2025') === '2025').length}명)
+                  </button>
+                  <button
+                    type="button"
+                    className={`season-tab ${selectedSeason === 'all' ? 'active' : ''}`}
+                    onClick={() => setSelectedSeason('all')}
+                  >
+                    전체 선수 ({uniquePlayers.length}명)
+                  </button>
+                </div>
                 <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
                 <div className="selection-list">
-                  {uniquePlayers.map((player, index) => (
-                    <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
-                      <span className="player-name">{player.name}</span>
-                      <span className="player-info">{player.team} | no.{player.jersey}</span>
-                    </div>
-                  ))}
+                  {uniquePlayers
+                    .filter(player => selectedSeason === 'all' || (player.season || '2025') === selectedSeason)
+                    .map((player, index) => (
+                      <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
+                        <span className="player-name">{player.name}</span>
+                        <span className="player-info">
+                          {player.team} | no.{player.jersey}
+                          <span className="season-badge-pill">{player.season || '2025'}시즌</span>
+                        </span>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -1142,7 +1215,7 @@ function App() {
               <>
                 {!needsSelection && displayRecords.length === 0 && (
                   <div className="no-results">
-                    <p>검색 결과가 없습니다.</p>
+                    <p>선택된 시즌({selectedSeason === 'all' ? '전체' : selectedSeason + '년'})에 검색 결과가 없습니다.</p>
                   </div>
                 )}
               </>
@@ -1161,26 +1234,62 @@ function App() {
                   </h2>
                 </div>
 
+                {/* Player Season Selector Tabs */}
+                {selectedPlayerRecords.length > 0 && (
+                  <div className="player-season-container">
+                    <button
+                      type="button"
+                      className={`season-tab ${playerSeasonFilter === '2026' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPlayerSeasonFilter('2026');
+                        setSelectedCompetition('전체');
+                      }}
+                    >
+                      2026 시즌 ({selectedPlayerRecords.filter(r => r.season === '2026').length}경기)
+                    </button>
+                    <button
+                      type="button"
+                      className={`season-tab ${playerSeasonFilter === '2025' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPlayerSeasonFilter('2025');
+                        setSelectedCompetition('전체');
+                      }}
+                    >
+                      2025 시즌 ({selectedPlayerRecords.filter(r => (r.season || '2025') === '2025').length}경기)
+                    </button>
+                    <button
+                      type="button"
+                      className={`season-tab ${playerSeasonFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => {
+                        setPlayerSeasonFilter('all');
+                        setSelectedCompetition('전체');
+                      }}
+                    >
+                      전체 시즌 ({selectedPlayerRecords.length}경기)
+                    </button>
+                  </div>
+                )}
+
                 {/* Average Stats Section */}
                 {selectedPlayerAvgStats && (
                   <div className="player-avg-stats-container">
-                    <div className="avg-stat-item-circle">
+                    <div className="avg-stat-card">
                       <span className="label">평균 득점</span>
                       <span className="value">{selectedPlayerAvgStats.avgPoints}</span>
                     </div>
-                    <div className="avg-stat-item-circle">
+                    <div className="avg-stat-card">
                       <span className="label">평균 어시스트</span>
                       <span className="value">{selectedPlayerAvgStats.avgAssists}</span>
                     </div>
-                    <div className="avg-stat-item-circle">
+                    <div className="avg-stat-card">
                       <span className="label">평균 리바운드</span>
                       <span className="value">{selectedPlayerAvgStats.avgRebounds}</span>
                     </div>
-                    <div className="avg-stat-item-circle">
+                    <div className="avg-stat-card">
                       <span className="label">평균 스틸</span>
                       <span className="value">{selectedPlayerAvgStats.avgSteals}</span>
                     </div>
-                    <div className="avg-stat-item-circle">
+                    <div className="avg-stat-card">
                       <span className="label">평균 블록</span>
                       <span className="value">{selectedPlayerAvgStats.avgBlocks}</span>
                     </div>
