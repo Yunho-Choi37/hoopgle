@@ -197,7 +197,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
           className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
           onClick={() => onSelectSeason('2026')}
         >
-          2026 시즌 (최신)
+          2026 시즌
         </button>
         <button
           className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
@@ -799,6 +799,7 @@ function App() {
     setIsTeamSearchMode(false);
     setShowRankingsPage(false); // Ensure rankings page is hidden
     setSelectedPlayerAvgStats(null);
+    setSelectedSeason('2026');
   };
 
   const handleGoToDetailPage = () => {
@@ -974,11 +975,8 @@ function App() {
       setIsTeamSearchMode(true);
       try {
         const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
-        // Search in selected season first, fallback to all records if none found
-        let teamRecords = allRecords.filter(r => r.season === selectedSeason && r['소속팀'] && r['소속팀'].includes(cleanedSearchTerm));
-        if (teamRecords.length === 0) {
-          teamRecords = allRecords.filter(r => r['소속팀'] && r['소속팀'].includes(cleanedSearchTerm));
-        }
+        // Search across all records for the team
+        let teamRecords = allRecords.filter(r => r['소속팀'] && r['소속팀'].includes(cleanedSearchTerm));
 
         if (teamRecords.length > 0) {
           // Extract unique players from the team records
@@ -999,6 +997,14 @@ function App() {
           setUniquePlayers(players);
           setNeedsSelection(true);
           setSelectionMode('player');
+
+          const has2026 = players.some(p => p.season === '2026');
+          if (!has2026 && players.some(p => (p.season || '2025') === '2025')) {
+            setSelectedSeason('2025');
+          } else if (has2026 && selectedSeason !== 'all') {
+            setSelectedSeason('2026');
+          }
+
           setShowResults(true);
         } else {
           setShowResults(true); // Show "no results" message
@@ -1012,10 +1018,7 @@ function App() {
       // Player Search
       try {
         const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
-        let playerRecords = allRecords.filter(r => r.season === selectedSeason && r['선수명'] && r['선수명'].trim() === cleanedSearchTerm);
-        if (playerRecords.length === 0) {
-          playerRecords = allRecords.filter(r => r['선수명'] && r['선수명'].trim() === cleanedSearchTerm);
-        }
+        let playerRecords = allRecords.filter(r => r['선수명'] && r['선수명'].trim() === cleanedSearchTerm);
 
         if (playerRecords.length > 0) {
           const unique = [];
@@ -1037,6 +1040,13 @@ function App() {
             setUniquePlayers(unique);
             setNeedsSelection(true);
             setSelectionMode('player');
+
+            const has2026 = unique.some(p => p.season === '2026');
+            if (!has2026 && unique.some(p => (p.season || '2025') === '2025')) {
+              setSelectedSeason('2025');
+            } else if (has2026 && selectedSeason !== 'all') {
+              setSelectedSeason('2026');
+            }
           } else {
             await handlePlayerSelect(unique[0]);
           }
@@ -1137,7 +1147,7 @@ function App() {
                 setSelectedCompetition('전체');
               }}
             >
-              2026 시즌 (최신)
+              2026 시즌
             </button>
             <button
               type="button"
@@ -1408,22 +1418,6 @@ function App() {
         <h1 className="logo">
           <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
         </h1>
-        <div className="season-switcher-container">
-          <button 
-            type="button"
-            className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
-            onClick={() => setSelectedSeason('2026')}
-          >
-            2026 시즌 (최신)
-          </button>
-          <button 
-            type="button"
-            className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
-            onClick={() => setSelectedSeason('2025')}
-          >
-            2025 시즌
-          </button>
-        </div>
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-bar">
             <input
