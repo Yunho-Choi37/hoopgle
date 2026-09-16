@@ -104,14 +104,17 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
 
           return (
             <div key={player.name + player.team + player.jersey} className="player-card ranking-card">
-              <div className="card-header">
-                <span className="ranking-number">{displayRank}위</span>
-                {player.name} <span className="jersey-number">no.{player.jersey}</span>
-                {rankingType === 'avgPoints' && displayRank <= 5 && <span className="flame-emoji"> 🔥</span>}
-                {rankingType === 'avgAssists' && displayRank <= 5 && <span className="dime-dealer-emoji"> 🏀</span>}
-                {rankingType === 'avgRebounds' && displayRank <= 5 && <span className="sky-sweeper-emoji"> 🖐️</span>}
-                {rankingType === 'avgSteals' && displayRank <= 5 && <span className="steal-emoji"> 🥷</span>}
-                <span className="team-name-mobile">{player.team.replace('(', '').replace(')', '')}</span>
+              <div className="card-header ranking-card-header">
+                <div className="ranking-header-title">
+                  <span className="ranking-number">{displayRank}위</span>
+                  <span className="player-name-text">{player.name}</span>
+                  <span className="jersey-number">no.{player.jersey}</span>
+                  {rankingType === 'avgPoints' && displayRank <= 5 && <span className="flame-emoji" title="Hot Player"> 🔥</span>}
+                  {rankingType === 'avgAssists' && displayRank <= 5 && <span className="dime-dealer-emoji" title="Dime Dealer"> 🏀</span>}
+                  {rankingType === 'avgRebounds' && displayRank <= 5 && <span className="sky-sweeper-emoji" title="Sky Sweeper"> 🖐️</span>}
+                  {rankingType === 'avgSteals' && displayRank <= 5 && <span className="steal-emoji" title="Steal Master"> 🥷</span>}
+                </div>
+                <span className="team-name-badge">{player.team.replace('(', '').replace(')', '')}</span>
               </div>
               <div className="card-body">
                 <div className={`card-item ${rankingType === 'totalPoints' || rankingType === 'avgPoints' ? 'highlight-yellow' : ''}`}>
@@ -152,7 +155,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
                 </div>
                 {Object.entries(player.competitions).map(([compName, points]) => (
                   <div key={compName} className="card-item">
-                    <span className="label">{compName.replace('대회', '').trim()} 총득점</span>
+                    <span className="label">{compName.replace(/전국남녀중고농구연맹전|전국남녀중고농구|중고농구/g, '').replace('대회', '').trim()} 총득점</span>
                     <span className="value">{points}</span>
                   </div>
                 ))}
@@ -185,7 +188,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
 
   return (
     <div className="rankings-container">
-      <div className="results-header">
+      <div className="results-header rankings-header-bar">
         <h1 className="logo-small" onClick={onGoHome}>
           <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
         </h1>
@@ -273,64 +276,55 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
           className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">AVG 득점</span>
-          <span className="mobile-text">평득</span>
+          AVG 득점
         </button>
         <button
           className={`type-tab-button ${rankingType === 'avgAssists' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgAssists'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">AVG 어시스트</span>
-          <span className="mobile-text">평어</span>
+          AVG 어시스트
         </button>
         <button
           className={`type-tab-button ${rankingType === 'avgRebounds' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgRebounds'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">AVG 리바운드</span>
-          <span className="mobile-text">평리</span>
+          AVG 리바운드
         </button>
         <button
           className={`type-tab-button ${rankingType === 'avgSteals' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgSteals'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">AVG 스틸</span>
-          <span className="mobile-text">평스</span>
+          AVG 스틸
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalBlocks' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalBlocks'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">블록슛</span>
-          <span className="mobile-text">블</span>
+          블록슛
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalPoints'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">총득점</span>
-          <span className="mobile-text">총득</span>
+          총득점
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalAssists' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalAssists'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">총 어시스트</span>
-          <span className="mobile-text">총어</span>
+          총 어시스트
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalRebounds' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalRebounds'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">총 리바운드</span>
-          <span className="mobile-text">총리</span>
+          총 리바운드
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalSteals' ? 'active' : ''}`}
           onClick={() => { setRankingType('totalSteals'); setSearchTerm(''); }}
         >
-          <span className="desktop-text">총 스틸</span>
-          <span className="mobile-text">총스</span>
+          총 스틸
         </button>
       </div>
 
@@ -755,20 +749,27 @@ function App() {
     }
 
     // Process all records to calculate total points and assign season
-    const processedAllRecords = allRecords.map(p => {
-      const q1 = parseInt(p['1Q 득점']) || 0;
-      const q2 = parseInt(p['2Q 득점']) || 0;
-      const q3 = parseInt(p['3Q 득점']) || 0;
-      const q4 = parseInt(p['4Q 득점']) || 0;
-      const ot = parseInt(p['연장 득점']) || 0;
-      const season = p['시즌'] ? String(p['시즌']) : (p['대회명'] && String(p['대회명']).includes('2026') ? '2026' : '2025');
+    const invalidKeywords = ['time out', 'timeout', '감독', '코치', 'total', 'tota', 'team', '팀 합계', '합계', '잔여'];
+    const processedAllRecords = allRecords
+      .filter(p => {
+        const name = String(p['선수명'] || '').trim().toLowerCase();
+        if (!name) return false;
+        return !invalidKeywords.some(kw => name.includes(kw));
+      })
+      .map(p => {
+        const q1 = parseInt(p['1Q 득점']) || 0;
+        const q2 = parseInt(p['2Q 득점']) || 0;
+        const q3 = parseInt(p['3Q 득점']) || 0;
+        const q4 = parseInt(p['4Q 득점']) || 0;
+        const ot = parseInt(p['연장 득점']) || 0;
+        const season = p['시즌'] ? String(p['시즌']) : (p['대회명'] && String(p['대회명']).includes('2026') ? '2026' : '2025');
 
-      return {
-        ...p,
-        '총득점': q1 + q2 + q3 + q4 + ot,
-        season: season,
-      };
-    });
+        return {
+          ...p,
+          '총득점': q1 + q2 + q3 + q4 + ot,
+          season: season,
+        };
+      });
 
     setCachedRecords(processedAllRecords);
     setIsLoading(false);
@@ -1102,14 +1103,16 @@ function App() {
       <div className="app-container results-mode">
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column' }}>
           <div className="results-header">
-            <button className="back-button" onClick={handleGoHome}>
-              <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16px" height="16px">
-                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
-              </svg>
-            </button>
-            <h1 className="logo-small" onClick={handleGoHome}>
-              <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
-            </h1>
+            <div className="results-brand">
+              <button className="back-button" onClick={handleGoHome}>
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="16px" height="16px">
+                  <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"></path>
+                </svg>
+              </button>
+              <h1 className="logo-small" onClick={handleGoHome}>
+                <span className="hoopgle-red">H</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">o</span><span className="hoopgle-yellow">p</span><span className="hoopgle-navy"> Z</span><span className="hoopgle-yellow">o</span><span className="hoopgle-navy">n</span><span className="hoopgle-yellow">e</span>
+              </h1>
+            </div>
             <form onSubmit={handleSearch} className="search-form-results">
               <input
                 type="text"
@@ -1121,67 +1124,30 @@ function App() {
             </form>
           </div>
 
-          <div className="results-season-bar">
-            <span className="season-label-tag">시즌 선택:</span>
-            <button
-              type="button"
-              className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedSeason('2026');
-                setPlayerSeasonFilter('2026');
-                setSelectedCompetition('전체');
-              }}
-            >
-              2026 시즌
-            </button>
-            <button
-              type="button"
-              className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedSeason('2025');
-                setPlayerSeasonFilter('2025');
-                setSelectedCompetition('전체');
-              }}
-            >
-              2025 시즌
-            </button>
-            <button
-              type="button"
-              className={`season-tab ${selectedSeason === 'all' ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedSeason('all');
-                setPlayerSeasonFilter('all');
-                setSelectedCompetition('전체');
-              }}
-            >
-              전체 시즌
-            </button>
-          </div>
-
           <div className="results-container">
             {needsSelection && (
               <div className="selection-container">
-                <div className="season-switcher-container" style={{ margin: '0 auto 16px' }}>
+                <div className="season-switcher-container">
                   <button
                     type="button"
                     className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
                     onClick={() => setSelectedSeason('2026')}
                   >
-                    2026 시즌 선수 ({uniquePlayers.filter(p => p.season === '2026').length}명)
+                    2026 시즌 ({uniquePlayers.filter(p => p.season === '2026').length}명)
                   </button>
                   <button
                     type="button"
                     className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
                     onClick={() => setSelectedSeason('2025')}
                   >
-                    2025 시즌 선수 ({uniquePlayers.filter(p => (p.season || '2025') === '2025').length}명)
+                    2025 시즌 ({uniquePlayers.filter(p => (p.season || '2025') === '2025').length}명)
                   </button>
                   <button
                     type="button"
                     className={`season-tab ${selectedSeason === 'all' ? 'active' : ''}`}
                     onClick={() => setSelectedSeason('all')}
                   >
-                    전체 선수 ({uniquePlayers.length}명)
+                    전체 ({uniquePlayers.length}명)
                   </button>
                 </div>
                 <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
@@ -1192,7 +1158,7 @@ function App() {
                       <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
                         <span className="player-name">{player.name}</span>
                         <span className="player-info">
-                          {player.team} | no.{player.jersey}
+                          <span className="player-team-text">{player.team} | no.{player.jersey}</span>
                           <span className="season-badge-pill">{player.season || '2025'}시즌</span>
                         </span>
                       </div>
@@ -1220,8 +1186,8 @@ function App() {
               <>
                 <div className="player-header">
                   <h2>
-                    {displayRecords[0]['선수명']}
-                    <span className="player-sub-info"> {displayRecords[0]['소속팀']} | no.{displayRecords[0]['등번호']}</span>
+                    <span className="player-main-name">{displayRecords[0]['선수명']}</span>
+                    <span className="player-sub-info">{displayRecords[0]['소속팀']} | no.{displayRecords[0]['등번호']}</span>
                     {isHotPlayer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="flame-emoji" title="Hot Player (평균 득점 Top 5)"> 🔥</span>}
                     {isDimeDealer(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="dime-dealer-emoji" title="Dime Dealer (평균 어시스트 Top 5)"> 🏀</span>}
                     {isSkySweeper(displayRecords[0]['선수명'], displayRecords[0]['소속팀']) && <span className="sky-sweeper-emoji" title="Sky Sweeper (평균 리바운드 Top 5)"> 🖐️</span>}
@@ -1260,7 +1226,7 @@ function App() {
                         setSelectedCompetition('전체');
                       }}
                     >
-                      전체 시즌 ({selectedPlayerRecords.length}경기)
+                      전체 ({selectedPlayerRecords.length}경기)
                     </button>
                   </div>
                 )}
@@ -1329,12 +1295,17 @@ function App() {
                   {displayRecords.map((record, index) => (
                     <div key={index} className="player-card">
                       <div className="card-header">
-                        {record['대회명']} <span className="team-name-mobile">vs {record['상대팀']}</span>
+                        <span className="game-comp-name">{record['대회명']}</span>
+                        <span className="team-name-mobile">vs {record['상대팀']}</span>
                       </div>
                       <div className="card-body">
                         <div className="card-item highlight-yellow">
                           <span className="label">득점</span>
                           <span className="value">{record['총득점']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">출전시간</span>
+                          <span className="value">{record['플레잉 타임'] || '-'}</span>
                         </div>
                         <div className="card-item">
                           <span className="label">어시스트</span>
@@ -1353,12 +1324,12 @@ function App() {
                           <span className="value">{record['블록슛']}</span>
                         </div>
                         <div className="card-item">
-                          <span className="label">3점슛 (성공/시도)</span>
-                          <span className="value">{record['3점슛 성공']}/{record['3점슛 시도']}</span>
+                          <span className="label">턴오버</span>
+                          <span className="value">{record['턴오버']}</span>
                         </div>
                         <div className="card-item">
-                          <span className="label">3점 성공률</span>
-                          <span className="value">{record['3점 성공률(%)']}%</span>
+                          <span className="label">파울</span>
+                          <span className="value">{record['총 파울']}</span>
                         </div>
                         <div className="card-item">
                           <span className="label">2점슛 (성공/시도)</span>
@@ -1369,20 +1340,20 @@ function App() {
                           <span className="value">{record['2점 성공률(%)']}%</span>
                         </div>
                         <div className="card-item">
+                          <span className="label">3점슛 (성공/시도)</span>
+                          <span className="value">{record['3점슛 성공']}/{record['3점슛 시도']}</span>
+                        </div>
+                        <div className="card-item">
+                          <span className="label">3점 성공률</span>
+                          <span className="value">{record['3점 성공률(%)']}%</span>
+                        </div>
+                        <div className="card-item">
                           <span className="label">자유투 (성공/시도)</span>
                           <span className="value">{record['자유투 성공']}/{record['자유투 시도']}</span>
                         </div>
                         <div className="card-item">
                           <span className="label">자유투 성공률</span>
                           <span className="value">{record['자유투 성공률(%)']}%</span>
-                        </div>
-                        <div className="card-item">
-                          <span className="label">파울</span>
-                          <span className="value">{record['총 파울']}</span>
-                        </div>
-                        <div className="card-item">
-                          <span className="label">턴오버</span>
-                          <span className="value">{record['턴오버']}</span>
                         </div>
                       </div>
                     </div>
