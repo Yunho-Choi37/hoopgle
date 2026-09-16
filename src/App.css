@@ -223,6 +223,12 @@
 }
 
 /* New Table Styles */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -262,6 +268,8 @@ table {
   flex-shrink: 0;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .competition-button:hover {
@@ -286,12 +294,120 @@ table {
   /* 학교 이름 굵게 */
 }
 
-.competition-buttons-container {
+/* Horizontal Scroll Menu System for Desktop & Mobile */
+.horizontal-scroll-wrapper {
+  position: relative;
+  width: 100%;
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  margin: 8px 0 16px;
+}
+
+.horizontal-scroll-track {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  width: 100%;
+  padding: 4px 4px 10px;
+  cursor: grab;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.horizontal-scroll-wrapper.no-overflow .horizontal-scroll-track {
   justify-content: center;
-  gap: 10px;
-  margin-top: 20px;
+}
+
+.horizontal-scroll-wrapper.has-overflow .horizontal-scroll-track {
+  justify-content: flex-start;
+}
+
+.horizontal-scroll-track.is-dragging {
+  cursor: grabbing !important;
+  scroll-behavior: auto;
+}
+
+/* Sleek modern scrollbar on desktop */
+.horizontal-scroll-track::-webkit-scrollbar {
+  height: 6px;
+}
+
+.horizontal-scroll-track::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.horizontal-scroll-track::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.horizontal-scroll-track::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Floating Navigation Arrows */
+.scroll-arrow-box {
+  position: absolute;
+  top: 0;
+  bottom: 10px;
+  width: 48px;
+  display: flex;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.scroll-arrow-left {
+  left: 0;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.96) 45%, rgba(255, 255, 255, 0));
+  justify-content: flex-start;
+}
+
+.scroll-arrow-right {
+  right: 0;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.96) 45%, rgba(255, 255, 255, 0));
+  justify-content: flex-end;
+}
+
+.scroll-arrow-btn {
+  pointer-events: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  margin: 0 2px;
+}
+
+.scroll-arrow-btn:hover {
+  background: #f8fafc;
+  color: #1a73e8;
+  border-color: #1a73e8;
+  transform: scale(1.1);
+  box-shadow: 0 3px 10px rgba(26, 115, 232, 0.25);
+}
+
+.scroll-arrow-btn:active {
+  transform: scale(0.95);
+}
+
+.competition-buttons-container {
+  gap: 8px;
+  width: 100%;
 }
 
 .player-profile-box {
@@ -399,6 +515,8 @@ table {
   transition: all 0.2s ease;
   white-space: nowrap;
   flex-shrink: 0;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .season-tab:hover {
@@ -445,18 +563,22 @@ table {
     font-weight: 800;
   }
 
-  .competition-buttons-container {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px 2px 8px;
-    gap: 6px;
+  .horizontal-scroll-track::-webkit-scrollbar {
+    display: none;
+    height: 0;
+  }
+
+  .horizontal-scroll-track {
     scrollbar-width: none;
   }
 
-  .competition-buttons-container::-webkit-scrollbar {
+  .scroll-arrow-box {
     display: none;
+  }
+
+  .competition-buttons-container {
+    padding: 4px 2px 8px;
+    gap: 6px;
   }
 
   .competition-button {
@@ -913,21 +1035,14 @@ tbody tr:hover {
 }
 
 /* Tabs for Ranking Type (Points, Assists, Rebounds, Blocks) */
-/* Tabs for Ranking Type (Points, Assists, Rebounds, Blocks) */
 .ranking-type-tabs {
   display: flex;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 8px;
   margin-bottom: 18px;
-  padding: 4px 2px 8px;
   border: none;
   background: transparent;
-  scrollbar-width: none;
-}
-
-.ranking-type-tabs::-webkit-scrollbar {
-  display: none;
+  width: 100%;
 }
 
 .type-tab-button {
@@ -942,6 +1057,8 @@ tbody tr:hover {
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .type-tab-button:hover {

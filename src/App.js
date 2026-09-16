@@ -3,6 +3,7 @@ import CommunityPage from './CommunityPage';
 import { db } from './firebaseConfig';
 import { collection, getDocs, query } from 'firebase/firestore';
 import './App.css';
+import HorizontalScrollMenu from './HorizontalScrollMenu';
 
 // Helper to format tournament names into concise labels for cards
 const formatCompShortName = (name) => {
@@ -282,7 +283,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
         </div>
       )}
 
-      <div className="ranking-type-tabs">
+      <HorizontalScrollMenu className="ranking-type-tabs">
         <button
           className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
@@ -337,7 +338,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
         >
           총 스틸
         </button>
-      </div>
+      </HorizontalScrollMenu>
 
       <div className="ranking-search-bar">
         <input
@@ -1138,7 +1139,7 @@ function App() {
           <div className="results-container">
             {needsSelection && (
               <div className="selection-container">
-                <div className="season-switcher-container">
+                <HorizontalScrollMenu className="season-switcher-container">
                   <button
                     type="button"
                     className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
@@ -1160,7 +1161,7 @@ function App() {
                   >
                     전체 ({uniquePlayers.length}명)
                   </button>
-                </div>
+                </HorizontalScrollMenu>
                 <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
                 <div className="selection-list">
                   {uniquePlayers
@@ -1208,7 +1209,7 @@ function App() {
 
                 {/* Player Season Selector Tabs */}
                 {selectedPlayerRecords.length > 0 && (
-                  <div className="player-season-container">
+                  <HorizontalScrollMenu className="player-season-container">
                     <button
                       type="button"
                       className={`season-tab ${playerSeasonFilter === '2026' ? 'active' : ''}`}
@@ -1239,7 +1240,7 @@ function App() {
                     >
                       전체 ({selectedPlayerRecords.length}경기)
                     </button>
-                  </div>
+                  </HorizontalScrollMenu>
                 )}
 
                 {/* Average Stats Section */}
@@ -1268,7 +1269,7 @@ function App() {
                   </div>
                 )}
 
-                <div className="competition-buttons-container">
+                <HorizontalScrollMenu className="competition-buttons-container">
                   {availableCompetitions.map(comp => (
                     <button
                       key={comp}
@@ -1278,7 +1279,7 @@ function App() {
                       {comp.replace('대회', '').trim()}
                     </button>
                   ))}
-                </div>
+                </HorizontalScrollMenu>
 
                 <div className="table-container desktop-table">
                   <table>
