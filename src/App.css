@@ -294,6 +294,37 @@ table {
   /* 학교 이름 굵게 */
 }
 
+/* Player Header Typography */
+.player-header {
+  margin-top: 14px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.player-header h2 {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.player-main-name {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a73e8;
+}
+
+.player-sub-info {
+  font-size: 16px;
+  font-weight: 600;
+  color: #475569;
+}
+
 /* Horizontal Scroll Menu System for Desktop & Mobile */
 .horizontal-scroll-wrapper {
   position: relative;

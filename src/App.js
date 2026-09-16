@@ -1276,7 +1276,7 @@ function App() {
                       className={`competition-button ${selectedCompetition === comp ? 'active' : ''}`}
                       onClick={() => setSelectedCompetition(comp)}
                     >
-                      {comp.replace('대회', '').trim()}
+                      {comp === '전체' ? '전체' : (formatCompShortName(comp) || comp.replace('대회', '').trim())}
                     </button>
                   ))}
                 </HorizontalScrollMenu>
