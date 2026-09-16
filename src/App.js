@@ -743,9 +743,10 @@ function App() {
       const q = query(collection(db, 'player_records'));
       const querySnapshot = await getDocs(q);
 
+      const existingIds = new Set(allRecords.map(r => r.id).filter(Boolean));
       querySnapshot.forEach((doc) => {
         const d = doc.data();
-        if (!d.id || !allRecords.some(r => r.id === d.id)) {
+        if (!d.id || !existingIds.has(d.id)) {
           allRecords.push(d);
         }
       });
@@ -948,117 +949,101 @@ function App() {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchTerm.trim()) return;
+    const rawSearch = searchTerm.trim();
+    if (!rawSearch) return;
 
-    setIsLoading(true); // Start loading
-
-    // Reset states
+    // Reset states and provide INSTANT visual feedback
     setUniquePlayers([]);
     setDisplayRecords([]);
-    setShowResults(false);
+    setSelectedPlayerRecords([]);
+    setSelectedPlayerAvgStats(null);
+    setSelectedCompetition('전체');
+    setAvailableCompetitions([]);
     setNeedsSelection(false);
     setSelectionMode('');
     setIsTeamSearchMode(false);
-    setSelectedCompetition('전체');
-    setAvailableCompetitions([]);
-    setSelectedPlayerRecords([]);
-    setSelectedPlayerAvgStats(null);
+    setShowResults(true); // Instant transition to results view
+    setIsLoading(true);
 
-    // Check if the search term ends with '중' or '고' or '학교' (Team Search)
-    const cleanedSearchTerm = searchTerm.trim();
-    if (!cleanedSearchTerm) {
-      setIsLoading(false);
-      return;
-    }
+    try {
+      const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
 
-    if (cleanedSearchTerm.endsWith('중') || cleanedSearchTerm.endsWith('고') || cleanedSearchTerm.endsWith('학교')) {
-      setIsTeamSearchMode(true);
-      try {
-        const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
-        // Search across all records for the team
-        let teamRecords = allRecords.filter(r => r['소속팀'] && r['소속팀'].includes(cleanedSearchTerm));
+      const normalize = (s) => (s ? String(s).replace(/\s+/g, '').toLowerCase() : '');
+      const target = normalize(rawSearch);
 
-        if (teamRecords.length > 0) {
-          // Extract unique players from the team records
-          const players = [];
-          const seen = new Set();
-          teamRecords.forEach(r => {
-            const key = `${r['선수명']}_${r['등번호']}_${r['소속팀']}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              players.push({
-                name: r['선수명'],
-                team: r['소속팀'],
-                jersey: r['등번호'],
-                season: r.season
-              });
-            }
-          });
-          setUniquePlayers(players);
+      // 1. Search matching players (exact or partial)
+      const matchingPlayerRecords = allRecords.filter(r => {
+        const pName = normalize(r['선수명']);
+        return pName === target || pName.includes(target);
+      });
+
+      // 2. Search matching teams
+      const matchingTeamRecords = allRecords.filter(r => {
+        const tName = normalize(r['소속팀']);
+        return tName.includes(target);
+      });
+
+      // Check if user specifically searched a school pattern (e.g. ends with 중/고/학교)
+      const isExplicitTeam = rawSearch.endsWith('중') || rawSearch.endsWith('고') || rawSearch.endsWith('학교');
+
+      let candidateRecords = [];
+
+      if (isExplicitTeam) {
+        candidateRecords = matchingTeamRecords.length > 0 ? matchingTeamRecords : matchingPlayerRecords;
+        setIsTeamSearchMode(matchingTeamRecords.length > 0);
+      } else {
+        // Check if there is an exact player name match first
+        const exactPlayers = matchingPlayerRecords.filter(r => normalize(r['선수명']) === target);
+        if (exactPlayers.length > 0) {
+          candidateRecords = exactPlayers;
+          setIsTeamSearchMode(false);
+        } else if (matchingPlayerRecords.length > 0) {
+          candidateRecords = matchingPlayerRecords;
+          setIsTeamSearchMode(false);
+        } else if (matchingTeamRecords.length > 0) {
+          // E.g. user typed "용산", "휘문", "경복" without "고"
+          candidateRecords = matchingTeamRecords;
+          setIsTeamSearchMode(true);
+        }
+      }
+
+      if (candidateRecords.length > 0) {
+        const unique = [];
+        const seen = new Set();
+        candidateRecords.forEach(r => {
+          const key = `${r['소속팀']}_${r['등번호']}_${r['선수명']}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            unique.push({
+              name: r['선수명'],
+              team: r['소속팀'],
+              jersey: r['등번호'],
+              season: r.season
+            });
+          }
+        });
+
+        if (unique.length > 1) {
+          setUniquePlayers(unique);
           setNeedsSelection(true);
           setSelectionMode('player');
 
-          const has2026 = players.some(p => p.season === '2026');
-          if (!has2026 && players.some(p => (p.season || '2025') === '2025')) {
+          const has2026 = unique.some(p => p.season === '2026');
+          if (!has2026 && unique.some(p => (p.season || '2025') === '2025')) {
             setSelectedSeason('2025');
           } else if (has2026 && selectedSeason !== 'all') {
             setSelectedSeason('2026');
           }
-
-          setShowResults(true);
         } else {
-          setShowResults(true); // Show "no results" message
+          await handlePlayerSelect(unique[0]);
         }
-      } catch (error) {
-        console.error('Error searching team:', error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setDisplayRecords([]);
       }
-    } else {
-      // Player Search
-      try {
-        const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
-        let playerRecords = allRecords.filter(r => r['선수명'] && r['선수명'].trim() === cleanedSearchTerm);
-
-        if (playerRecords.length > 0) {
-          const unique = [];
-          const seen = new Set();
-          playerRecords.forEach(r => {
-            const key = `${r['소속팀']}_${r['등번호']}_${r['선수명']}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              unique.push({
-                name: r['선수명'],
-                team: r['소속팀'],
-                jersey: r['등번호'],
-                season: r.season
-              });
-            }
-          });
-
-          if (unique.length > 1) {
-            setUniquePlayers(unique);
-            setNeedsSelection(true);
-            setSelectionMode('player');
-
-            const has2026 = unique.some(p => p.season === '2026');
-            if (!has2026 && unique.some(p => (p.season || '2025') === '2025')) {
-              setSelectedSeason('2025');
-            } else if (has2026 && selectedSeason !== 'all') {
-              setSelectedSeason('2026');
-            }
-          } else {
-            await handlePlayerSelect(unique[0]);
-          }
-          setShowResults(true);
-        } else {
-          setShowResults(true); // Show "no results" message
-        }
-      } catch (error) {
-        console.error('Error searching player:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    } catch (error) {
+      console.error('Error searching:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
