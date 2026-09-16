@@ -7,10 +7,11 @@
             "**/.*",
             "**/node_modules/**"
         ],
-        "rewrites": [
+        "redirects": [
             {
                 "source": "**",
-                "destination": "/index.html"
+                "destination": "https://hoopgle.vercel.app",
+                "type": 301
             }
         ]
     }
