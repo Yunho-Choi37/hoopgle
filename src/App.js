@@ -4,6 +4,17 @@ import { db } from './firebaseConfig';
 import { collection, getDocs, query } from 'firebase/firestore';
 import './App.css';
 
+// Helper to format tournament names into concise labels for cards
+const formatCompShortName = (name) => {
+  if (!name) return '';
+  return name
+    .replace(/202[0-9]\s*/g, '')
+    .replace(/제[0-9]+회\s*/g, '')
+    .replace(/전국남녀중고농구연맹전|전국남녀중고농구|중고농구/g, '')
+    .replace('대회', '')
+    .trim();
+};
+
 // RankingsPage Component Definition
 const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, selectedSeason, onSelectSeason }) => {
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
@@ -155,7 +166,7 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
                 </div>
                 {Object.entries(player.competitions).map(([compName, points]) => (
                   <div key={compName} className="card-item">
-                    <span className="label">{compName.replace(/전국남녀중고농구연맹전|전국남녀중고농구|중고농구/g, '').replace('대회', '').trim()} 총득점</span>
+                    <span className="label">{formatCompShortName(compName)}</span>
                     <span className="value">{points}</span>
                   </div>
                 ))}

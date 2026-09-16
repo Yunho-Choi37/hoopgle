@@ -524,8 +524,10 @@ tbody tr:hover {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  margin-top: 20px;
-  /* Add space from the header/tabs */
+  margin-top: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .player-card {
@@ -535,6 +537,10 @@ tbody tr:hover {
   padding: 16px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
   margin-bottom: 14px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .player-card .card-header {
@@ -683,17 +689,24 @@ tbody tr:hover {
   }
 
   .card-body {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .card-item {
     padding: 8px 10px;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   .card-item .label {
-    font-size: 10.5px;
-    white-space: nowrap;
+    font-size: 11px;
+    white-space: normal !important;
+    word-break: keep-all;
+    overflow-wrap: break-word;
   }
 
   .card-item .value {
@@ -769,8 +782,9 @@ tbody tr:hover {
 .rankings-container {
   width: 100%;
   max-width: 800px;
-  /* 너비 확장 */
-  padding: 20px;
+  margin: 0 auto;
+  padding: 16px 14px;
+  box-sizing: border-box;
 }
 
 .rankings-header-bar {
@@ -974,27 +988,58 @@ tbody tr:hover {
 }
 
 @media (max-width: 768px) {
+  .rankings-container {
+    padding: 12px 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
   .type-tab-button {
     padding: 7px 13px;
     font-size: 12px;
   }
 
   .ranking-card .card-body {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .ranking-card .card-item {
-    padding: 6px 8px;
+    padding: 6px 3px;
+    min-width: 0 !important;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-align: center;
   }
 
   .ranking-card .card-item .label {
-    font-size: 10px;
-    line-height: 1.2;
+    font-size: 9.5px;
+    line-height: 1.25;
+    white-space: normal !important;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    margin-bottom: 2px;
+    display: block;
   }
 
   .ranking-card .card-item .value {
     font-size: 14px;
+    font-weight: 800;
+    display: block;
+  }
+}
+
+@media (max-width: 360px) {
+  .ranking-card .card-body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .ranking-card .card-item .label {
+    font-size: 10px;
   }
 }
 
