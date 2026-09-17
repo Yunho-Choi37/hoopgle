@@ -17,33 +17,42 @@ const formatCompShortName = (name) => {
 };
 
 // RankingsPage Component Definition
-const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, selectedSeason, onSelectSeason }) => {
+const RankingsPage = ({
+  middleSchoolRankings,
+  highSchoolRankings,
+  onGoHome,
+  selectedSeason,
+  onSelectSeason,
+  isRecordsLoading,
+}) => {
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
   const [middleSchoolSubTab, setMiddleSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [rankingType, setRankingType] = useState('avgPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
-  const [isLoading, setIsLoading] = useState(true); // Loading state for rankings
+  const [timedOut, setTimedOut] = useState(false);
 
-  // Simulate loading or check if data is available
+  const hasRankings = Boolean(
+    (middleSchoolRankings?.all && middleSchoolRankings.all.length > 0) ||
+    (highSchoolRankings?.all && highSchoolRankings.all.length > 0)
+  );
+
+  // Safety fallback: if after 15s still no rankings and records finished loading, stop showing spinner
   useEffect(() => {
-    if (middleSchoolRankings.all.length > 0 || highSchoolRankings.all.length > 0) {
-      setIsLoading(false);
-    } else {
-      // If data is empty, it might still be fetching in the parent. 
-      // However, since we pass props, we rely on parent's fetch. 
-      // But we can show loading if the lists are empty initially.
-      // A better approach is to pass 'isLoading' from parent or simply assume loading if empty.
-      // For now, let's use a timeout if it stays empty too long, or better, 
-      // let's assume if props are empty arrays, we are loading? 
-      // Actually, parent does the fetch. Let's add an effect to turn off loading when data arrives.
-      const timer = setTimeout(() => setIsLoading(false), 2000); // Fallback timeout
-      return () => clearTimeout(timer);
+    if (hasRankings) {
+      setTimedOut(false);
+      return;
     }
-  }, [middleSchoolRankings, highSchoolRankings]);
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, 15000);
+    return () => clearTimeout(timer);
+  }, [hasRankings, selectedSeason]);
+
+  const isLoading = (isRecordsLoading || !hasRankings) && !timedOut;
 
   const getSortedRankings = (rankings) => {
-    let sorted = [...rankings];
+    let sorted = [...(rankings || [])];
     if (rankingType === 'totalPoints') {
       sorted.sort((a, b) => b.totalPoints - a.totalPoints);
     } else if (rankingType === 'totalAssists') {
@@ -67,27 +76,32 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
   };
 
   const renderRankingList = (rankings) => {
-    const sortedRankings = getSortedRankings(rankings);
-
-    // Filter by search term and limit to top 50
-    const filteredRankings = sortedRankings
-      .filter(player =>
-        player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        player.team.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .slice(0, 50); // Limit to top 50 players
-
     if (isLoading) {
       return (
-        <div className="loading-container" style={{ padding: '50px 0' }}>
+        <div className="loading-container" style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="loading-spinner"></div>
-          <p>랭킹 불러오는 중...</p>
+          <p style={{ marginTop: '16px', color: '#475569', fontWeight: '600', fontSize: '15px' }}>
+            랭킹 데이터를 집계하고 있습니다...
+          </p>
         </div>
       );
     }
 
+    const sortedRankings = getSortedRankings(rankings || []);
+
+    // Filter by search term and limit to top 50
+    const filteredRankings = sortedRankings
+      .filter(player =>
+        (player.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (player.team || '').toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .slice(0, 50); // Limit to top 50 players
+
     if (filteredRankings.length === 0) {
-      return <p className="no-results-message">검색 결과가 없습니다.</p>;
+      if (searchTerm.trim()) {
+        return <p className="no-results-message">"{searchTerm}"에 대한 검색 결과가 없습니다.</p>;
+      }
+      return <p className="no-results-message">해당 부문의 랭킹 데이터가 없습니다.</p>;
     }
 
     return (
@@ -182,19 +196,19 @@ const RankingsPage = ({ middleSchoolRankings, highSchoolRankings, onGoHome, sele
   let currentRankings = [];
   if (activeTab === 'middleSchool') {
     if (middleSchoolSubTab === 'all') {
-      currentRankings = middleSchoolRankings.all;
+      currentRankings = middleSchoolRankings?.all || [];
     } else if (middleSchoolSubTab === 'male') {
-      currentRankings = middleSchoolRankings.male;
+      currentRankings = middleSchoolRankings?.male || [];
     } else if (middleSchoolSubTab === 'female') {
-      currentRankings = middleSchoolRankings.female;
+      currentRankings = middleSchoolRankings?.female || [];
     }
   } else if (activeTab === 'highSchool') {
     if (highSchoolSubTab === 'all') {
-      currentRankings = highSchoolRankings.all;
+      currentRankings = highSchoolRankings?.all || [];
     } else if (highSchoolSubTab === 'male') {
-      currentRankings = highSchoolRankings.male;
+      currentRankings = highSchoolRankings?.male || [];
     } else if (highSchoolSubTab === 'female') {
-      currentRankings = highSchoolRankings.female;
+      currentRankings = highSchoolRankings?.female || [];
     }
   }
 
@@ -441,8 +455,8 @@ function App() {
   const [middleSchoolRankings, setMiddleSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store middle school rankings
   const [highSchoolRankings, setHighSchoolRankings] = useState({ all: [], male: [], female: [] }); // State to store high school rankings
   const [selectedPlayerAvgStats, setSelectedPlayerAvgStats] = useState(null);
-  const [session, setSession] = useState(null); // Add session state for CommunityPage
   const [isLoading, setIsLoading] = useState(false); // Loading state for search
+  const [isRecordsLoading, setIsRecordsLoading] = useState(true); // Loading state for initial records cache
 
   // Helper function to calculate average stats for a given set of records
   const calculateAvgStatsForRecords = (records) => {
@@ -730,84 +744,89 @@ function App() {
   // Fetch and cache all records from local 2026 data and Firestore
   const fetchRecords = async () => {
     if (cachedRecords.length > 0) return cachedRecords;
+    setIsRecordsLoading(true);
     setIsLoading(true);
     let allRecords = [];
 
-    // 1. Load 2026 Spring data from bundled static JSON (Super fast & 0 quota cost!)
     try {
-      const res = await fetch('/data/spring_2026.json');
-      if (res.ok) {
-        const spring2026 = await res.json();
-        allRecords = allRecords.concat(spring2026);
+      // 1. Load 2026 Spring data from bundled static JSON (Super fast & 0 quota cost!)
+      try {
+        const res = await fetch('/data/spring_2026.json');
+        if (res.ok) {
+          const spring2026 = await res.json();
+          allRecords = allRecords.concat(spring2026);
+        }
+      } catch (err) {
+        console.warn('Could not load local spring_2026.json:', err);
       }
-    } catch (err) {
-      console.warn('Could not load local spring_2026.json:', err);
+
+      // 2. Load 2025 records from Firestore (with robust deduplication)
+      try {
+        const q = query(collection(db, 'player_records'));
+        const querySnapshot = await getDocs(q);
+
+        const existingIds = new Set(allRecords.map(r => r.id).filter(Boolean));
+        const existingFingerprints = new Set(
+          allRecords.map(r => 
+            `${r['대회명']}__${r['소속팀']}__${r['상대팀']}__${r['선수명']}__${r['등번호']}__${r['1Q 득점']}__${r['2Q 득점']}__${r['3Q 득점']}__${r['4Q 득점']}__${r['플레잉 타임']}`
+          )
+        );
+
+        querySnapshot.forEach((doc) => {
+          const d = doc.data();
+          const docId = doc.id;
+
+          // Skip if ID is already present
+          if (existingIds.has(docId) || (d.id && existingIds.has(d.id))) {
+            return;
+          }
+
+          // Skip 2026 spring records from Firestore since all 2026 spring records are already in static JSON
+          if (docId.startsWith('2026_spring_') || d['대회명'] === '제63회 춘계 전국남녀중고농구연맹전') {
+            return;
+          }
+
+          // Check fingerprint to eliminate any identical duplicate game records
+          const fp = `${d['대회명']}__${d['소속팀']}__${d['상대팀']}__${d['선수명']}__${d['등번호']}__${d['1Q 득점']}__${d['2Q 득점']}__${d['3Q 득점']}__${d['4Q 득점']}__${d['플레잉 타임']}`;
+          if (!existingFingerprints.has(fp)) {
+            existingFingerprints.add(fp);
+            existingIds.add(docId);
+            allRecords.push({ id: docId, ...d });
+          }
+        });
+      } catch (error) {
+        console.warn('Firestore fetch notice (quota/network):', error.message || error);
+      }
+
+      // Process all records to calculate total points and assign season
+      const invalidKeywords = ['time out', 'timeout', '감독', '코치', 'total', 'tota', 'team', '팀 합계', '합계', '잔여'];
+      const processedAllRecords = allRecords
+        .filter(p => {
+          const name = String(p['선수명'] || '').trim().toLowerCase();
+          if (!name) return false;
+          return !invalidKeywords.some(kw => name.includes(kw));
+        })
+        .map(p => {
+          const q1 = parseInt(p['1Q 득점']) || 0;
+          const q2 = parseInt(p['2Q 득점']) || 0;
+          const q3 = parseInt(p['3Q 득점']) || 0;
+          const q4 = parseInt(p['4Q 득점']) || 0;
+          const ot = parseInt(p['연장 득점']) || 0;
+          const season = p['시즌'] ? String(p['시즌']) : (p['대회명'] && String(p['대회명']).includes('2026') ? '2026' : '2025');
+
+          return {
+            ...p,
+            '총득점': q1 + q2 + q3 + q4 + ot,
+            season: season,
+          };
+        });
+
+      setCachedRecords(processedAllRecords);
+      return processedAllRecords;
+    } finally {
+      setIsLoading(false);
+      setIsRecordsLoading(false);
     }
-
-    // 2. Load 2025 records from Firestore (with robust deduplication)
-    try {
-      const q = query(collection(db, 'player_records'));
-      const querySnapshot = await getDocs(q);
-
-      const existingIds = new Set(allRecords.map(r => r.id).filter(Boolean));
-      const existingFingerprints = new Set(
-        allRecords.map(r => 
-          `${r['대회명']}__${r['소속팀']}__${r['상대팀']}__${r['선수명']}__${r['등번호']}__${r['1Q 득점']}__${r['2Q 득점']}__${r['3Q 득점']}__${r['4Q 득점']}__${r['플레잉 타임']}`
-        )
-      );
-
-      querySnapshot.forEach((doc) => {
-        const d = doc.data();
-        const docId = doc.id;
-
-        // Skip if ID is already present
-        if (existingIds.has(docId) || (d.id && existingIds.has(d.id))) {
-          return;
-        }
-
-        // Skip 2026 spring records from Firestore since all 2026 spring records are already in static JSON
-        if (docId.startsWith('2026_spring_') || d['대회명'] === '제63회 춘계 전국남녀중고농구연맹전') {
-          return;
-        }
-
-        // Check fingerprint to eliminate any identical duplicate game records
-        const fp = `${d['대회명']}__${d['소속팀']}__${d['상대팀']}__${d['선수명']}__${d['등번호']}__${d['1Q 득점']}__${d['2Q 득점']}__${d['3Q 득점']}__${d['4Q 득점']}__${d['플레잉 타임']}`;
-        if (!existingFingerprints.has(fp)) {
-          existingFingerprints.add(fp);
-          existingIds.add(docId);
-          allRecords.push({ id: docId, ...d });
-        }
-      });
-    } catch (error) {
-      console.warn('Firestore fetch notice (quota/network):', error.message || error);
-    }
-
-    // Process all records to calculate total points and assign season
-    const invalidKeywords = ['time out', 'timeout', '감독', '코치', 'total', 'tota', 'team', '팀 합계', '합계', '잔여'];
-    const processedAllRecords = allRecords
-      .filter(p => {
-        const name = String(p['선수명'] || '').trim().toLowerCase();
-        if (!name) return false;
-        return !invalidKeywords.some(kw => name.includes(kw));
-      })
-      .map(p => {
-        const q1 = parseInt(p['1Q 득점']) || 0;
-        const q2 = parseInt(p['2Q 득점']) || 0;
-        const q3 = parseInt(p['3Q 득점']) || 0;
-        const q4 = parseInt(p['4Q 득점']) || 0;
-        const ot = parseInt(p['연장 득점']) || 0;
-        const season = p['시즌'] ? String(p['시즌']) : (p['대회명'] && String(p['대회명']).includes('2026') ? '2026' : '2025');
-
-        return {
-          ...p,
-          '총득점': q1 + q2 + q3 + q4 + ot,
-          season: season,
-        };
-      });
-
-    setCachedRecords(processedAllRecords);
-    setIsLoading(false);
-    return processedAllRecords;
   };
 
   // Initial load
@@ -1123,6 +1142,7 @@ function App() {
         onGoHome={handleGoHome}
         selectedSeason={selectedSeason}
         onSelectSeason={setSelectedSeason}
+        isRecordsLoading={isRecordsLoading}
       />
     );
   }
