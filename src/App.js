@@ -488,12 +488,14 @@ const COLUMN_MAPPING = {
   '굿디펜스': 'GD',
   '블록슛': 'BLK',
   '턴오버': 'TO',
-  '총 파울': 'Foul'
+  '총 파울': 'Foul',
+  '경기구분': '구분',
+  '경기 영상': '영상'
 };
 
 // 표시할 컬럼 순서 (원본 컬럼명 사용)
 const DISPLAY_COLUMNS = [
-  '대회명', '소속팀', '상대팀', '선수명', '등번호', '1Q 득점', '2Q 득점', '3Q 득점', '4Q 득점', '연장 득점', '총득점',
+  '대회명', '경기구분', '경기 영상', '소속팀', '상대팀', '선수명', '등번호', '1Q 득점', '2Q 득점', '3Q 득점', '4Q 득점', '연장 득점', '총득점',
   '플레잉 타임', '2점슛 성공', '2점슛 시도', '2점 성공률(%)', '3점슛 성공', '3점슛 시도',
   '3점 성공률(%)', '필드골 성공률(%)', '자유투 성공', '자유투 시도', '자유투 성공률(%)',
   '공격 리바운드', '수비 리바운드', '총 리바운드', '어시스트', '스틸', '굿디펜스', '블록슛',
@@ -502,10 +504,6 @@ const DISPLAY_COLUMNS = [
 
 // 레코드 처리 헬퍼 함수
 const processRecords = (records) => {
-  if (records && records.length > 0) {
-    // console.log("processRecords - first record (before processing):");
-    // console.log(JSON.stringify(records[0], null, 2));
-  }
   return records.map(p => {
     const q1 = parseInt(p['1Q 득점']) || 0;
     const q2 = parseInt(p['2Q 득점']) || 0;
@@ -513,11 +511,11 @@ const processRecords = (records) => {
     const q4 = parseInt(p['4Q 득점']) || 0;
     const ot = parseInt(p['연장 득점']) || 0;
 
-    // console.log(`Processing player: ${p['선수명']}, 1Q: ${p['1Q 득점']}, 2Q: ${p['2Q 득점']}, 3Q: ${p['3Q 득점']}, 4Q: ${p['4Q 득점']}, OT: ${p['연장 득점']}`);
-    // console.log(`Parsed points: 1Q=${q1}, 2Q=${q2}, 3Q=${q3}, 4Q=${q4}, OT=${ot}`);
     return {
       ...p,
       '총득점': q1 + q2 + q3 + q4 + ot,
+      '경기구분': p['경기구분'] || '예선',
+      'videoUrl': p['videoUrl'] || null,
     };
   });
 };
@@ -1437,9 +1435,39 @@ function App() {
                     <tbody>
                       {displayRecords.map((record, index) => (
                         <tr key={index}>
-                          {DISPLAY_COLUMNS.map(col => (
-                            <td key={col}>{record[col]}</td>
-                          ))}
+                          {DISPLAY_COLUMNS.map(col => {
+                            if (col === '경기구분') {
+                              const stage = record['경기구분'] || '예선';
+                              const badgeClass = stage === '결승' ? 'stage-final' : stage === '4강' ? 'stage-semifinal' : stage === '결선' ? 'stage-playoff' : 'stage-prelim';
+                              return (
+                                <td key={col}>
+                                  <span className={`stage-badge ${badgeClass}`}>
+                                    {stage === '결승' ? '🏆 결승' : stage === '4강' ? '🔥 4강' : stage}
+                                  </span>
+                                </td>
+                              );
+                            }
+                            if (col === '경기 영상') {
+                              return (
+                                <td key={col} className="video-cell">
+                                  {record.videoUrl ? (
+                                    <a
+                                      href={record.videoUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="video-link-btn"
+                                      title="해당 경기 유튜브 영상 보기"
+                                    >
+                                      ▶ 영상
+                                    </a>
+                                  ) : (
+                                    <span className="no-video-dash">-</span>
+                                  )}
+                                </td>
+                              );
+                            }
+                            return <td key={col}>{record[col]}</td>;
+                          })}
                         </tr>
                       ))}
                     </tbody>
@@ -1450,9 +1478,28 @@ function App() {
                 <div className="cards-container hide-on-desktop">
                   {displayRecords.map((record, index) => (
                     <div key={index} className="player-card">
-                      <div className="card-header">
-                        <span className="game-comp-name">{record['대회명']}</span>
-                        <span className="team-name-mobile">vs {record['상대팀']}</span>
+                      <div className="card-header game-card-header">
+                        <div className="game-card-title-group">
+                          <span className="game-comp-name">{record['대회명']}</span>
+                          {record['경기구분'] && (
+                            <span className={`stage-badge ${record['경기구분'] === '결승' ? 'stage-final' : record['경기구분'] === '4강' ? 'stage-semifinal' : record['경기구분'] === '결선' ? 'stage-playoff' : 'stage-prelim'}`}>
+                              {record['경기구분'] === '결승' ? '🏆 결승' : record['경기구분'] === '4강' ? '🔥 4강' : record['경기구분']}
+                            </span>
+                          )}
+                        </div>
+                        <div className="game-card-right-group">
+                          <span className="team-name-mobile">vs {record['상대팀']}</span>
+                          {record.videoUrl && (
+                            <a
+                              href={record.videoUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="video-link-btn-mobile"
+                            >
+                              ▶ 영상
+                            </a>
+                          )}
+                        </div>
                       </div>
                       <div className="card-body">
                         <div className="card-item highlight-yellow">
