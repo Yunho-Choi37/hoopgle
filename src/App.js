@@ -745,7 +745,6 @@ function App() {
   const fetchRecords = async () => {
     if (cachedRecords.length > 0) return cachedRecords;
     setIsRecordsLoading(true);
-    setIsLoading(true);
     let allRecords = [];
 
     try {
@@ -824,7 +823,6 @@ function App() {
       setCachedRecords(processedAllRecords);
       return processedAllRecords;
     } finally {
-      setIsLoading(false);
       setIsRecordsLoading(false);
     }
   };
@@ -1180,7 +1178,6 @@ function App() {
                 placeholder="선수명 또는 학교명 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                disabled={isLoading}
               />
               <button type="submit" disabled={isLoading}>
                 {isLoading ? (
@@ -1454,7 +1451,6 @@ function App() {
               placeholder="선수명 또는 팀명으로 검색"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              disabled={isLoading}
             />
           </div>
           <div className="buttons">
@@ -1468,8 +1464,8 @@ function App() {
                 '검색'
               )}
             </button>
-            <button type="button" onClick={handleGoToDetailPage} disabled={isLoading}>Hoop Zone</button>
-            <button type="button" onClick={handleGoToRankingsPage} disabled={isLoading}>Rankings</button>
+            <button type="button" onClick={handleGoToDetailPage}>Hoop Zone</button>
+            <button type="button" onClick={handleGoToRankingsPage}>Rankings</button>
           </div>
         </form>
         <div className="data-source-container">
