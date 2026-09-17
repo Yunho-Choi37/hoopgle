@@ -28,7 +28,7 @@ const RankingsPage = ({
   const [activeTab, setActiveTab] = useState('middleSchool'); // 'middleSchool' or 'highSchool'
   const [middleSchoolSubTab, setMiddleSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
   const [highSchoolSubTab, setHighSchoolSubTab] = useState('all'); // 'all', 'male', 'female'
-  const [rankingType, setRankingType] = useState('avgPoints'); // 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'
+  const [rankingType, setRankingType] = useState('eff'); // 'eff', 'tsPct', 'efgPct', 'astToRatio', 'hustle', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals', 'avgBlocks', 'totalPoints', 'totalAssists', 'totalRebounds', 'totalSteals', 'totalBlocks'
   const [searchTerm, setSearchTerm] = useState(''); // New state for search term
   const [timedOut, setTimedOut] = useState(false);
 
@@ -53,24 +53,36 @@ const RankingsPage = ({
 
   const getSortedRankings = (rankings) => {
     let sorted = [...(rankings || [])];
-    if (rankingType === 'totalPoints') {
-      sorted.sort((a, b) => b.totalPoints - a.totalPoints);
-    } else if (rankingType === 'totalAssists') {
-      sorted.sort((a, b) => b.totalAssists - a.totalAssists);
-    } else if (rankingType === 'totalRebounds') {
-      sorted.sort((a, b) => b.totalRebounds - a.totalRebounds);
-    } else if (rankingType === 'totalBlocks') {
-      sorted.sort((a, b) => b.totalBlocks - a.totalBlocks);
-    } else if (rankingType === 'totalSteals') {
-      sorted.sort((a, b) => b.totalSteals - a.totalSteals);
+    if (rankingType === 'eff') {
+      sorted.sort((a, b) => (b.eff ?? 0) - (a.eff ?? 0));
+    } else if (rankingType === 'tsPct') {
+      sorted.sort((a, b) => (b.tsPct ?? 0) - (a.tsPct ?? 0));
+    } else if (rankingType === 'efgPct') {
+      sorted.sort((a, b) => (b.efgPct ?? 0) - (a.efgPct ?? 0));
+    } else if (rankingType === 'astToRatio') {
+      sorted.sort((a, b) => (b.astToRatio ?? 0) - (a.astToRatio ?? 0));
+    } else if (rankingType === 'hustle') {
+      sorted.sort((a, b) => (b.hustle ?? 0) - (a.hustle ?? 0));
     } else if (rankingType === 'avgPoints') {
-      sorted.sort((a, b) => b.avgPoints - a.avgPoints);
+      sorted.sort((a, b) => (b.avgPoints ?? 0) - (a.avgPoints ?? 0));
     } else if (rankingType === 'avgAssists') {
-      sorted.sort((a, b) => b.avgAssists - a.avgAssists);
+      sorted.sort((a, b) => (b.avgAssists ?? 0) - (a.avgAssists ?? 0));
     } else if (rankingType === 'avgRebounds') {
-      sorted.sort((a, b) => b.avgRebounds - a.avgRebounds);
+      sorted.sort((a, b) => (b.avgRebounds ?? 0) - (a.avgRebounds ?? 0));
     } else if (rankingType === 'avgSteals') {
-      sorted.sort((a, b) => b.avgSteals - a.avgSteals);
+      sorted.sort((a, b) => (b.avgSteals ?? 0) - (a.avgSteals ?? 0));
+    } else if (rankingType === 'avgBlocks') {
+      sorted.sort((a, b) => (b.avgBlocks ?? 0) - (a.avgBlocks ?? 0));
+    } else if (rankingType === 'totalPoints') {
+      sorted.sort((a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0));
+    } else if (rankingType === 'totalAssists') {
+      sorted.sort((a, b) => (b.totalAssists ?? 0) - (a.totalAssists ?? 0));
+    } else if (rankingType === 'totalRebounds') {
+      sorted.sort((a, b) => (b.totalRebounds ?? 0) - (a.totalRebounds ?? 0));
+    } else if (rankingType === 'totalBlocks') {
+      sorted.sort((a, b) => (b.totalBlocks ?? 0) - (a.totalBlocks ?? 0));
+    } else if (rankingType === 'totalSteals') {
+      sorted.sort((a, b) => (b.totalSteals ?? 0) - (a.totalSteals ?? 0));
     }
     return sorted;
   };
@@ -107,26 +119,24 @@ const RankingsPage = ({
     return (
       <div className="cards-container">
         {filteredRankings.map((player, index) => {
-          let displayRank;
-          if (rankingType === 'totalPoints') {
-            displayRank = player.originalRankTotalPoints;
-          } else if (rankingType === 'totalAssists') {
-            displayRank = player.originalRankTotalAssists;
-          } else if (rankingType === 'totalRebounds') {
-            displayRank = player.originalRankTotalRebounds;
-          } else if (rankingType === 'totalBlocks') {
-            displayRank = player.originalRankTotalBlocks;
-          } else if (rankingType === 'totalSteals') {
-            displayRank = player.originalRankTotalSteals;
-          } else if (rankingType === 'avgPoints') {
-            displayRank = player.originalRankAvgPoints;
-          } else if (rankingType === 'avgAssists') {
-            displayRank = player.originalRankAvgAssists;
-          } else if (rankingType === 'avgRebounds') {
-            displayRank = player.originalRankAvgRebounds;
-          } else if (rankingType === 'avgSteals') {
-            displayRank = player.originalRankAvgSteals;
-          }
+          const rankFieldMap = {
+            eff: 'originalRankEff',
+            tsPct: 'originalRankTsPct',
+            efgPct: 'originalRankEfgPct',
+            astToRatio: 'originalRankAstToRatio',
+            hustle: 'originalRankHustle',
+            avgPoints: 'originalRankAvgPoints',
+            avgAssists: 'originalRankAvgAssists',
+            avgRebounds: 'originalRankAvgRebounds',
+            avgSteals: 'originalRankAvgSteals',
+            avgBlocks: 'originalRankAvgBlocks',
+            totalPoints: 'originalRankTotalPoints',
+            totalAssists: 'originalRankTotalAssists',
+            totalRebounds: 'originalRankTotalRebounds',
+            totalBlocks: 'originalRankTotalBlocks',
+            totalSteals: 'originalRankTotalSteals',
+          };
+          const displayRank = player[rankFieldMap[rankingType]] || (index + 1);
 
           return (
             <div key={player.name + player.team + player.jersey} className="player-card ranking-card">
@@ -135,33 +145,46 @@ const RankingsPage = ({
                   <span className="ranking-number">{displayRank}위</span>
                   <span className="player-name-text">{player.name}</span>
                   <span className="jersey-number">no.{player.jersey}</span>
+                  {rankingType === 'eff' && displayRank <= 5 && <span className="eff-badge" title="효율성 마스터"> ⚡</span>}
+                  {rankingType === 'tsPct' && displayRank <= 5 && <span className="ts-badge" title="고효율 슈터"> 🎯</span>}
+                  {rankingType === 'efgPct' && displayRank <= 5 && <span className="efg-badge" title="스나이퍼"> 🏹</span>}
+                  {rankingType === 'astToRatio' && displayRank <= 5 && <span className="ast-to-badge" title="볼배급 마스터"> 🧠</span>}
+                  {rankingType === 'hustle' && displayRank <= 5 && <span className="hustle-badge" title="허슬 킹"> 🛡️</span>}
                   {rankingType === 'avgPoints' && displayRank <= 5 && <span className="flame-emoji" title="Hot Player"> 🔥</span>}
                   {rankingType === 'avgAssists' && displayRank <= 5 && <span className="dime-dealer-emoji" title="Dime Dealer"> 🏀</span>}
                   {rankingType === 'avgRebounds' && displayRank <= 5 && <span className="sky-sweeper-emoji" title="Sky Sweeper"> 🖐️</span>}
                   {rankingType === 'avgSteals' && displayRank <= 5 && <span className="steal-emoji" title="Steal Master"> 🥷</span>}
+                  {rankingType === 'avgBlocks' && displayRank <= 5 && <span className="block-emoji" title="Block Master"> 🧱</span>}
                 </div>
                 <span className="team-name-badge">{player.team.replace('(', '').replace(')', '')}</span>
               </div>
               <div className="card-body">
-                <div className={`card-item ${rankingType === 'totalPoints' || rankingType === 'avgPoints' ? 'highlight-yellow' : ''}`}>
-                  <span className="label">총득점</span>
-                  <span className="value">{player.totalPoints}</span>
+                {/* 스마트 지표 (우선 배치) */}
+                <div className={`card-item ${rankingType === 'eff' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">EFF (효율성)</span>
+                  <span className="value">{player.eff ?? '-'}</span>
                 </div>
-                <div className={`card-item ${rankingType === 'totalAssists' || rankingType === 'avgAssists' ? 'highlight-yellow' : ''}`}>
-                  <span className="label">총 어시스트</span>
-                  <span className="value">{player.totalAssists}</span>
+                <div className={`card-item ${rankingType === 'tsPct' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">TS% (트루슈팅)</span>
+                  <span className="value">{player.tsPct ? `${player.tsPct}%` : '-'}</span>
                 </div>
-                <div className={`card-item ${rankingType === 'totalRebounds' || rankingType === 'avgRebounds' ? 'highlight-yellow' : ''}`}>
-                  <span className="label">총 리바운드</span>
-                  <span className="value">{player.totalRebounds}</span>
+                <div className={`card-item ${rankingType === 'efgPct' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">eFG% (유효야투)</span>
+                  <span className="value">{player.efgPct ? `${player.efgPct}%` : '-'}</span>
                 </div>
-                <div className={`card-item ${rankingType === 'totalBlocks' ? 'highlight-yellow' : ''}`}>
-                  <span className="label">총 블록슛</span>
-                  <span className="value">{player.totalBlocks}</span>
+                <div className={`card-item ${rankingType === 'astToRatio' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">AST/TO (어시/실책)</span>
+                  <span className="value">{player.astToRatio ?? '-'}</span>
                 </div>
-                <div className={`card-item ${rankingType === 'totalSteals' ? 'highlight-yellow' : ''}`}>
-                  <span className="label">총 스틸</span>
-                  <span className="value">{player.totalSteals}</span>
+                <div className={`card-item ${rankingType === 'hustle' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">허슬 / 수비</span>
+                  <span className="value">{player.hustle ?? '-'}</span>
+                </div>
+
+                {/* 경기수 및 기본 평균 지표 */}
+                <div className="card-item">
+                  <span className="label">출전 경기수</span>
+                  <span className="value">{player.gamesPlayed || 0}G</span>
                 </div>
                 <div className={`card-item ${rankingType === 'avgPoints' ? 'highlight-yellow' : ''}`}>
                   <span className="label">평균 득점</span>
@@ -179,6 +202,33 @@ const RankingsPage = ({
                   <span className="label">평균 스틸</span>
                   <span className="value">{player.avgSteals}</span>
                 </div>
+                <div className={`card-item ${rankingType === 'avgBlocks' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">평균 블록슛</span>
+                  <span className="value">{player.avgBlocks}</span>
+                </div>
+
+                {/* 누적 지표 */}
+                <div className={`card-item ${rankingType === 'totalPoints' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">총득점</span>
+                  <span className="value">{player.totalPoints}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'totalAssists' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">총 어시스트</span>
+                  <span className="value">{player.totalAssists}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'totalRebounds' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">총 리바운드</span>
+                  <span className="value">{player.totalRebounds}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'totalSteals' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">총 스틸</span>
+                  <span className="value">{player.totalSteals}</span>
+                </div>
+                <div className={`card-item ${rankingType === 'totalBlocks' ? 'highlight-yellow' : ''}`}>
+                  <span className="label">총 블록슛</span>
+                  <span className="value">{player.totalBlocks}</span>
+                </div>
+
                 {Object.entries(player.competitions).map(([compName, points]) => (
                   <div key={compName} className="card-item">
                     <span className="label">{formatCompShortName(compName)}</span>
@@ -239,13 +289,13 @@ const RankingsPage = ({
       <div className="ranking-tabs">
         <button
           className={`tab-button ${activeTab === 'middleSchool' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('middleSchool'); setMiddleSchoolSubTab('all'); setRankingType('avgPoints'); setSearchTerm(''); }}
+          onClick={() => { setActiveTab('middleSchool'); setMiddleSchoolSubTab('all'); setRankingType('eff'); setSearchTerm(''); }}
         >
           중등부
         </button>
         <button
           className={`tab-button ${activeTab === 'highSchool' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('highSchool'); setHighSchoolSubTab('all'); setRankingType('avgPoints'); setSearchTerm(''); }}
+          onClick={() => { setActiveTab('highSchool'); setHighSchoolSubTab('all'); setRankingType('eff'); setSearchTerm(''); }}
         >
           고등부
         </button>
@@ -299,6 +349,36 @@ const RankingsPage = ({
 
       <HorizontalScrollMenu className="ranking-type-tabs">
         <button
+          className={`type-tab-button ${rankingType === 'eff' ? 'active' : ''}`}
+          onClick={() => { setRankingType('eff'); setSearchTerm(''); }}
+        >
+          EFF (효율성)
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'tsPct' ? 'active' : ''}`}
+          onClick={() => { setRankingType('tsPct'); setSearchTerm(''); }}
+        >
+          TS% (트루 슈팅)
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'efgPct' ? 'active' : ''}`}
+          onClick={() => { setRankingType('efgPct'); setSearchTerm(''); }}
+        >
+          eFG% (유효 야투율)
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'astToRatio' ? 'active' : ''}`}
+          onClick={() => { setRankingType('astToRatio'); setSearchTerm(''); }}
+        >
+          AST/TO (어시/실책)
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'hustle' ? 'active' : ''}`}
+          onClick={() => { setRankingType('hustle'); setSearchTerm(''); }}
+        >
+          허슬 / 수비
+        </button>
+        <button
           className={`type-tab-button ${rankingType === 'avgPoints' ? 'active' : ''}`}
           onClick={() => { setRankingType('avgPoints'); setSearchTerm(''); }}
         >
@@ -323,10 +403,10 @@ const RankingsPage = ({
           AVG 스틸
         </button>
         <button
-          className={`type-tab-button ${rankingType === 'totalBlocks' ? 'active' : ''}`}
-          onClick={() => { setRankingType('totalBlocks'); setSearchTerm(''); }}
+          className={`type-tab-button ${rankingType === 'avgBlocks' ? 'active' : ''}`}
+          onClick={() => { setRankingType('avgBlocks'); setSearchTerm(''); }}
         >
-          블록슛
+          AVG 블록슛
         </button>
         <button
           className={`type-tab-button ${rankingType === 'totalPoints' ? 'active' : ''}`}
@@ -351,6 +431,12 @@ const RankingsPage = ({
           onClick={() => { setRankingType('totalSteals'); setSearchTerm(''); }}
         >
           총 스틸
+        </button>
+        <button
+          className={`type-tab-button ${rankingType === 'totalBlocks' ? 'active' : ''}`}
+          onClick={() => { setRankingType('totalBlocks'); setSearchTerm(''); }}
+        >
+          총 블록슛
         </button>
       </HorizontalScrollMenu>
 
@@ -523,10 +609,8 @@ function App() {
       const jerseyNumber = record['등번호'];
       const competitionName = record['대회명'];
 
-      // Check for essential identifying information
       if (!playerName || !teamName || jerseyNumber === undefined || jerseyNumber === null) {
-        // console.warn("Skipping record due to missing player identifying information:", record);
-        return; // Skip this record
+        return;
       }
 
       const gamePoints = parseInt(record['총득점']) || 0;
@@ -534,140 +618,120 @@ function App() {
       const gameRebounds = parseInt(record['총 리바운드']) || 0;
       const gameBlocks = parseInt(record['블록슛']) || 0;
       const gameSteals = parseInt(record['스틸']) || 0;
+      const gameGoodDefense = parseInt(record['굿디펜스']) || 0;
+      const gameTurnovers = parseInt(record['턴오버']) || 0;
+      const game2PM = parseInt(record['2점슛 성공']) || 0;
+      const game2PA = parseInt(record['2점슛 시도']) || 0;
+      const game3PM = parseInt(record['3점슛 성공']) || 0;
+      const game3PA = parseInt(record['3점슛 시도']) || 0;
+      const gameFTM = parseInt(record['자유투 성공']) || 0;
+      const gameFTA = parseInt(record['자유투 시도']) || 0;
+      const gameOReb = parseInt(record['공격 리바운드']) || 0;
+      const gameDReb = parseInt(record['수비 리바운드']) || 0;
 
       const key = `${playerName}_${teamName}`;
 
       const isMiddleSchool = teamName.includes('중학교') || teamName.endsWith('중');
       const isHighSchool = teamName.includes('고등학교') || teamName.endsWith('고');
 
-      // Middle School Gender Classification
       const isFemaleMiddleSchool = (isMiddleSchool && (teamName.includes('여자') || teamName.includes('여중'))) || specificFemaleMiddleSchools.includes(teamName);
-      const isMaleMiddleSchool = isMiddleSchool && !isFemaleMiddleSchool; // Assume male if not explicitly female middle school
+      const isMaleMiddleSchool = isMiddleSchool && !isFemaleMiddleSchool;
 
-      // High School Gender Classification
       const isFemaleHighSchool = (isHighSchool && (teamName.includes('여자') || teamName.includes('여고'))) || specificFemaleHighSchools.includes(teamName);
-      const isMaleHighSchool = isHighSchool && !isFemaleHighSchool; // Assume male if not explicitly female high school
+      const isMaleHighSchool = isHighSchool && !isFemaleHighSchool;
 
-      // Function to initialize player stats
-      const initializePlayerStats = () => ({
-        name: playerName,
-        team: teamName,
-        jersey: jerseyNumber,
-        totalPoints: 0,
-        totalAssists: 0,
-        totalRebounds: 0,
-        totalBlocks: 0,
-        totalSteals: 0,
-        gamesPlayed: 0, // Add gamesPlayed
-        competitions: {}, // For points per competition
-      });
-
-      // Aggregate for general middle school
-      if (isMiddleSchool) {
-        if (!middleSchoolPlayerStats[key]) {
-          middleSchoolPlayerStats[key] = initializePlayerStats();
+      const addPlayerStats = (statsObj) => {
+        if (!statsObj[key]) {
+          statsObj[key] = {
+            name: playerName,
+            team: teamName,
+            jersey: jerseyNumber,
+            totalPoints: 0,
+            totalAssists: 0,
+            totalRebounds: 0,
+            totalBlocks: 0,
+            totalSteals: 0,
+            totalGoodDefense: 0,
+            totalTurnovers: 0,
+            total2PM: 0,
+            total2PA: 0,
+            total3PM: 0,
+            total3PA: 0,
+            totalFTM: 0,
+            totalFTA: 0,
+            totalOReb: 0,
+            totalDReb: 0,
+            gamesPlayed: 0,
+            competitions: {},
+          };
         }
-        middleSchoolPlayerStats[key].totalPoints += gamePoints;
-        middleSchoolPlayerStats[key].totalAssists += gameAssists;
-        middleSchoolPlayerStats[key].totalRebounds += gameRebounds;
-        middleSchoolPlayerStats[key].totalBlocks += gameBlocks;
-        middleSchoolPlayerStats[key].totalSteals += gameSteals;
-        middleSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
+        const p = statsObj[key];
+        p.totalPoints += gamePoints;
+        p.totalAssists += gameAssists;
+        p.totalRebounds += gameRebounds;
+        p.totalBlocks += gameBlocks;
+        p.totalSteals += gameSteals;
+        p.totalGoodDefense += gameGoodDefense;
+        p.totalTurnovers += gameTurnovers;
+        p.total2PM += game2PM;
+        p.total2PA += game2PA;
+        p.total3PM += game3PM;
+        p.total3PA += game3PA;
+        p.totalFTM += gameFTM;
+        p.totalFTA += gameFTA;
+        p.totalOReb += gameOReb;
+        p.totalDReb += gameDReb;
+        p.gamesPlayed += 1;
         if (competitionName) {
-          middleSchoolPlayerStats[key].competitions[competitionName] = (middleSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
+          p.competitions[competitionName] = (p.competitions[competitionName] || 0) + gamePoints;
         }
-      }
+      };
 
-      // Aggregate for male middle school
-      if (isMaleMiddleSchool) {
-        if (!maleMiddleSchoolPlayerStats[key]) {
-          maleMiddleSchoolPlayerStats[key] = initializePlayerStats();
-        }
-        maleMiddleSchoolPlayerStats[key].totalPoints += gamePoints;
-        maleMiddleSchoolPlayerStats[key].totalAssists += gameAssists;
-        maleMiddleSchoolPlayerStats[key].totalRebounds += gameRebounds;
-        maleMiddleSchoolPlayerStats[key].totalBlocks += gameBlocks;
-        maleMiddleSchoolPlayerStats[key].totalSteals += gameSteals;
-        maleMiddleSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
-        if (competitionName) {
-          maleMiddleSchoolPlayerStats[key].competitions[competitionName] = (maleMiddleSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
-        }
-      }
-
-      // Aggregate for female middle school
-      if (isFemaleMiddleSchool) {
-        if (!femaleMiddleSchoolPlayerStats[key]) {
-          femaleMiddleSchoolPlayerStats[key] = initializePlayerStats();
-        }
-        femaleMiddleSchoolPlayerStats[key].totalPoints += gamePoints;
-        femaleMiddleSchoolPlayerStats[key].totalAssists += gameAssists;
-        femaleMiddleSchoolPlayerStats[key].totalRebounds += gameRebounds;
-        femaleMiddleSchoolPlayerStats[key].totalBlocks += gameBlocks;
-        femaleMiddleSchoolPlayerStats[key].totalSteals += gameSteals;
-        femaleMiddleSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
-        if (competitionName) {
-          femaleMiddleSchoolPlayerStats[key].competitions[competitionName] = (femaleMiddleSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
-        }
-      }
-
-      // Aggregate for high school
-      if (isHighSchool) {
-        if (!highSchoolPlayerStats[key]) {
-          highSchoolPlayerStats[key] = initializePlayerStats();
-        }
-        highSchoolPlayerStats[key].totalPoints += gamePoints;
-        highSchoolPlayerStats[key].totalAssists += gameAssists;
-        highSchoolPlayerStats[key].totalRebounds += gameRebounds;
-        highSchoolPlayerStats[key].totalBlocks += gameBlocks;
-        highSchoolPlayerStats[key].totalSteals += gameSteals;
-        highSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
-        if (competitionName) {
-          highSchoolPlayerStats[key].competitions[competitionName] = (highSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
-        }
-      }
-
-      // Aggregate for male high school
-      if (isMaleHighSchool) {
-        if (!maleHighSchoolPlayerStats[key]) {
-          maleHighSchoolPlayerStats[key] = initializePlayerStats();
-        }
-        maleHighSchoolPlayerStats[key].totalPoints += gamePoints;
-        maleHighSchoolPlayerStats[key].totalAssists += gameAssists;
-        maleHighSchoolPlayerStats[key].totalRebounds += gameRebounds;
-        maleHighSchoolPlayerStats[key].totalBlocks += gameBlocks;
-        maleHighSchoolPlayerStats[key].totalSteals += gameSteals;
-        maleHighSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
-        if (competitionName) {
-          maleHighSchoolPlayerStats[key].competitions[competitionName] = (maleHighSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
-        }
-      }
-
-      // Aggregate for female high school
-      if (isFemaleHighSchool) {
-        if (!femaleHighSchoolPlayerStats[key]) {
-          femaleHighSchoolPlayerStats[key] = initializePlayerStats();
-        }
-        femaleHighSchoolPlayerStats[key].totalPoints += gamePoints;
-        femaleHighSchoolPlayerStats[key].totalAssists += gameAssists;
-        femaleHighSchoolPlayerStats[key].totalRebounds += gameRebounds;
-        femaleHighSchoolPlayerStats[key].totalBlocks += gameBlocks;
-        femaleHighSchoolPlayerStats[key].totalSteals += gameSteals;
-        femaleHighSchoolPlayerStats[key].gamesPlayed += 1; // Increment gamesPlayed
-        if (competitionName) {
-          femaleHighSchoolPlayerStats[key].competitions[competitionName] = (femaleHighSchoolPlayerStats[key].competitions[competitionName] || 0) + gamePoints;
-        }
-      }
+      if (isMiddleSchool) addPlayerStats(middleSchoolPlayerStats);
+      if (isMaleMiddleSchool) addPlayerStats(maleMiddleSchoolPlayerStats);
+      if (isFemaleMiddleSchool) addPlayerStats(femaleMiddleSchoolPlayerStats);
+      if (isHighSchool) addPlayerStats(highSchoolPlayerStats);
+      if (isMaleHighSchool) addPlayerStats(maleHighSchoolPlayerStats);
+      if (isFemaleHighSchool) addPlayerStats(femaleHighSchoolPlayerStats);
     });
 
-    // Calculate averages before finalizing and sorting
+    // Calculate averages & advanced metrics
     const calculateAverages = (stats) => {
       for (const key in stats) {
         const player = stats[key];
-        player.avgPoints = player.gamesPlayed > 0 ? (player.totalPoints / player.gamesPlayed).toFixed(1) : 0;
-        player.avgAssists = player.gamesPlayed > 0 ? (player.totalAssists / player.gamesPlayed).toFixed(1) : 0;
-        player.avgRebounds = player.gamesPlayed > 0 ? (player.totalRebounds / player.gamesPlayed).toFixed(1) : 0;
-        player.avgBlocks = player.gamesPlayed > 0 ? (player.totalBlocks / player.gamesPlayed).toFixed(1) : 0;
-        player.avgSteals = player.gamesPlayed > 0 ? (player.totalSteals / player.gamesPlayed).toFixed(1) : 0;
+        const gp = player.gamesPlayed || 1;
+
+        player.avgPoints = Number((player.totalPoints / gp).toFixed(1));
+        player.avgAssists = Number((player.totalAssists / gp).toFixed(1));
+        player.avgRebounds = Number((player.totalRebounds / gp).toFixed(1));
+        player.avgBlocks = Number((player.totalBlocks / gp).toFixed(1));
+        player.avgSteals = Number((player.totalSteals / gp).toFixed(1));
+
+        // 1. EFF (효율성) = (득점 + 리바운드 + 어시스트 + 스틸 + 블록슛 + 굿디펜스) - (야투실패 + 자유투실패 + 턴오버)
+        const fgAttempts = player.total2PA + player.total3PA;
+        const fgMade = player.total2PM + player.total3PM;
+        const fgMissed = Math.max(0, fgAttempts - fgMade);
+        const ftMissed = Math.max(0, player.totalFTA - player.totalFTM);
+
+        const totalEff = (
+          (player.totalPoints + player.totalRebounds + player.totalAssists + player.totalSteals + player.totalBlocks + player.totalGoodDefense)
+          - (fgMissed + ftMissed + player.totalTurnovers)
+        );
+        player.eff = Number((totalEff / gp).toFixed(1));
+
+        // 2. TS% (트루 슈팅 성공률) = 총득점 / [2 * (야투시도 + 0.44 * 자유투시도)] * 100
+        const tsAttempts = fgAttempts + (0.44 * player.totalFTA);
+        player.tsPct = tsAttempts > 0 ? Number(((player.totalPoints / (2 * tsAttempts)) * 100).toFixed(1)) : 0;
+
+        // 3. eFG% (유효 야투율) = (2점성공 + 1.5 * 3점성공) / 야투시도 * 100
+        player.efgPct = fgAttempts > 0 ? Number((((player.total2PM + (1.5 * player.total3PM)) / fgAttempts) * 100).toFixed(1)) : 0;
+
+        // 4. AST/TO (어시스트 대 턴오버 비율)
+        player.astToRatio = Number((player.totalAssists / Math.max(1, player.totalTurnovers)).toFixed(2));
+
+        // 5. 수비 & 허슬 지표 = (스틸*1.5 + 블록*1.5 + 굿디펜스*1.0 + 공격리바*1.2) / 경기수
+        const totalHustle = (player.totalSteals * 1.5) + (player.totalBlocks * 1.5) + (player.totalGoodDefense * 1.0) + (player.totalOReb * 1.2);
+        player.hustle = Number((totalHustle / gp).toFixed(1));
       }
       return stats;
     };
@@ -679,16 +743,34 @@ function App() {
     const maleHighSchoolStatsWithAverages = calculateAverages(maleHighSchoolPlayerStats);
     const femaleHighSchoolStatsWithAverages = calculateAverages(femaleHighSchoolPlayerStats);
 
+    const allSortKeys = [
+      'eff',
+      'tsPct',
+      'efgPct',
+      'astToRatio',
+      'hustle',
+      'avgPoints',
+      'avgAssists',
+      'avgRebounds',
+      'avgSteals',
+      'avgBlocks',
+      'totalPoints',
+      'totalAssists',
+      'totalRebounds',
+      'totalBlocks',
+      'totalSteals',
+    ];
+
     return {
       middleSchool: {
-        all: finalizeAndSort(middleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'),
-        male: finalizeAndSort(maleMiddleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'),
-        female: finalizeAndSort(femaleMiddleSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'),
+        all: finalizeAndSort(middleSchoolStatsWithAverages, ...allSortKeys),
+        male: finalizeAndSort(maleMiddleSchoolStatsWithAverages, ...allSortKeys),
+        female: finalizeAndSort(femaleMiddleSchoolStatsWithAverages, ...allSortKeys),
       },
       highSchool: {
-        all: finalizeAndSort(highSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'),
-        male: finalizeAndSort(maleHighSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'),
-        female: finalizeAndSort(femaleHighSchoolStatsWithAverages, 'totalPoints', 'totalAssists', 'totalRebounds', 'totalBlocks', 'totalSteals', 'avgPoints', 'avgAssists', 'avgRebounds', 'avgSteals'),
+        all: finalizeAndSort(highSchoolStatsWithAverages, ...allSortKeys),
+        male: finalizeAndSort(maleHighSchoolStatsWithAverages, ...allSortKeys),
+        female: finalizeAndSort(femaleHighSchoolStatsWithAverages, ...allSortKeys),
       }
     };
   };
@@ -700,18 +782,22 @@ function App() {
 
     sortKeys.forEach(key => {
       const sorted = [...players].sort((a, b) => {
-        // Primary sort by the current key (e.g., totalAssists)
-        if (b[key] !== a[key]) {
-          return b[key] - a[key];
+        const valA = a[key] ?? 0;
+        const valB = b[key] ?? 0;
+        if (valB !== valA) {
+          return valB - valA;
         }
-        // Secondary sort by totalPoints if primary key is equal
-        return b.totalPoints - a.totalPoints;
+        if ((b.eff ?? 0) !== (a.eff ?? 0)) {
+          return (b.eff ?? 0) - (a.eff ?? 0);
+        }
+        return (b.totalPoints ?? 0) - (a.totalPoints ?? 0);
       });
       sorted.forEach((player, index) => {
-        if (!rankedPlayers[player.name + player.team + player.jersey]) {
-          rankedPlayers[player.name + player.team + player.jersey] = { ...player };
+        const pKey = player.name + player.team + player.jersey;
+        if (!rankedPlayers[pKey]) {
+          rankedPlayers[pKey] = { ...player };
         }
-        rankedPlayers[player.name + player.team + player.jersey][`originalRank${key.charAt(0).toUpperCase() + key.slice(1)}`] = index + 1;
+        rankedPlayers[pKey][`originalRank${key.charAt(0).toUpperCase() + key.slice(1)}`] = index + 1;
       });
     });
 
