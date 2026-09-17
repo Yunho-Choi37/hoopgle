@@ -25,4 +25,5 @@ yarn-error.log*
 
 # data downloads
 downloads/
+scratch/
 *.pdf
