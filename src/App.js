@@ -1007,6 +1007,8 @@ function App() {
     if (!rawSearch) return;
 
     // Reset states and provide INSTANT visual feedback
+    setIsLoading(true);
+    setShowResults(true); // Instant transition to results view
     setUniquePlayers([]);
     setDisplayRecords([]);
     setSelectedPlayerRecords([]);
@@ -1016,8 +1018,9 @@ function App() {
     setNeedsSelection(false);
     setSelectionMode('');
     setIsTeamSearchMode(false);
-    setShowResults(true); // Instant transition to results view
-    setIsLoading(true);
+
+    // Yield control to let the browser paint the loading spinner immediately
+    await new Promise(resolve => setTimeout(resolve, 80));
 
     try {
       const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
@@ -1102,6 +1105,8 @@ function App() {
   };
 
   const handlePlayerSelect = async (player) => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 40));
     try {
       const allRecords = cachedRecords.length > 0 ? cachedRecords : await fetchRecords();
       const records = allRecords.filter(r =>
@@ -1130,6 +1135,8 @@ function App() {
       }
     } catch (error) {
       console.error('Error fetching player details:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1173,61 +1180,73 @@ function App() {
                 placeholder="선수명 또는 학교명 검색..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={isLoading}
               />
-              <button type="submit">검색</button>
+              <button type="submit" disabled={isLoading}>
+                {isLoading ? (
+                  <span className="btn-loading-content">
+                    <span className="btn-spinner"></span>
+                    검색 중...
+                  </span>
+                ) : (
+                  '검색'
+                )}
+              </button>
             </form>
           </div>
 
           <div className="results-container">
-            {needsSelection && (
-              <div className="selection-container">
-                <HorizontalScrollMenu className="season-switcher-container">
-                  <button
-                    type="button"
-                    className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
-                    onClick={() => setSelectedSeason('2026')}
-                  >
-                    2026 시즌 ({uniquePlayers.filter(p => p.season === '2026').length}명)
-                  </button>
-                  <button
-                    type="button"
-                    className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
-                    onClick={() => setSelectedSeason('2025')}
-                  >
-                    2025 시즌 ({uniquePlayers.filter(p => (p.season || '2025') === '2025').length}명)
-                  </button>
-                  <button
-                    type="button"
-                    className={`season-tab ${selectedSeason === 'all' ? 'active' : ''}`}
-                    onClick={() => setSelectedSeason('all')}
-                  >
-                    전체 ({uniquePlayers.length}명)
-                  </button>
-                </HorizontalScrollMenu>
-                <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
-                <div className="selection-list">
-                  {uniquePlayers
-                    .filter(player => selectedSeason === 'all' || (player.season || '2025') === selectedSeason)
-                    .map((player, index) => (
-                      <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
-                        <span className="player-name">{player.name}</span>
-                        <span className="player-info">
-                          <span className="player-team-text">{player.team} | no.{player.jersey}</span>
-                          <span className="season-badge-pill">{player.season || '2025'}시즌</span>
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </div>
-            )}
-
             {isLoading ? (
-              <div className="loading-container">
+              <div className="loading-container" style={{ padding: '60px 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div className="loading-spinner"></div>
-                <p>검색중...</p>
+                <p style={{ marginTop: '16px', color: '#475569', fontWeight: '600', fontSize: '15px' }}>
+                  선수 및 경기 기록을 검색하고 있습니다...
+                </p>
               </div>
             ) : (
               <>
+                {needsSelection && (
+                  <div className="selection-container">
+                    <HorizontalScrollMenu className="season-switcher-container">
+                      <button
+                        type="button"
+                        className={`season-tab ${selectedSeason === '2026' ? 'active' : ''}`}
+                        onClick={() => setSelectedSeason('2026')}
+                      >
+                        2026 시즌 ({uniquePlayers.filter(p => p.season === '2026').length}명)
+                      </button>
+                      <button
+                        type="button"
+                        className={`season-tab ${selectedSeason === '2025' ? 'active' : ''}`}
+                        onClick={() => setSelectedSeason('2025')}
+                      >
+                        2025 시즌 ({uniquePlayers.filter(p => (p.season || '2025') === '2025').length}명)
+                      </button>
+                      <button
+                        type="button"
+                        className={`season-tab ${selectedSeason === 'all' ? 'active' : ''}`}
+                        onClick={() => setSelectedSeason('all')}
+                      >
+                        전체 ({uniquePlayers.length}명)
+                      </button>
+                    </HorizontalScrollMenu>
+                    <h3>{selectionMode === 'player' ? '선수를 선택해주세요' : '대회를 선택해주세요'}</h3>
+                    <div className="selection-list">
+                      {uniquePlayers
+                        .filter(player => selectedSeason === 'all' || (player.season || '2025') === selectedSeason)
+                        .map((player, index) => (
+                          <div key={index} className="selection-item" onClick={() => handlePlayerSelect(player)}>
+                            <span className="player-name">{player.name}</span>
+                            <span className="player-info">
+                              <span className="player-team-text">{player.team} | no.{player.jersey}</span>
+                              <span className="season-badge-pill">{player.season || '2025'}시즌</span>
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
                 {!needsSelection && displayRecords.length === 0 && (
                   <div className="no-results">
                     <p>선택된 시즌({selectedSeason === 'all' ? '전체' : selectedSeason + '년'})에 검색 결과가 없습니다.</p>
@@ -1435,12 +1454,22 @@ function App() {
               placeholder="선수명 또는 팀명으로 검색"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className="buttons">
-            <button type="submit">검색</button>
-            <button type="button" onClick={handleGoToDetailPage}>Hoop Zone</button>
-            <button type="button" onClick={handleGoToRankingsPage}>Rankings</button>
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <span className="btn-loading-content">
+                  <span className="btn-spinner"></span>
+                  검색 중...
+                </span>
+              ) : (
+                '검색'
+              )}
+            </button>
+            <button type="button" onClick={handleGoToDetailPage} disabled={isLoading}>Hoop Zone</button>
+            <button type="button" onClick={handleGoToRankingsPage} disabled={isLoading}>Rankings</button>
           </div>
         </form>
         <div className="data-source-container">
