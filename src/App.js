@@ -843,42 +843,57 @@ function App() {
         console.warn('Could not load local spring_2026.json:', err);
       }
 
-      // 2. Load 2025 records from Firestore (with robust deduplication)
+      // 2. Load 2025 data (bundled static JSON with video URLs, fallback to Firestore)
+      let loaded2025 = false;
       try {
-        const q = query(collection(db, 'player_records'));
-        const querySnapshot = await getDocs(q);
+        const res2025 = await fetch('/data/records_2025.json');
+        if (res2025.ok) {
+          const records2025 = await res2025.json();
+          allRecords = allRecords.concat(records2025);
+          loaded2025 = true;
+        }
+      } catch (err) {
+        console.warn('Could not load local records_2025.json:', err);
+      }
 
-        const existingIds = new Set(allRecords.map(r => r.id).filter(Boolean));
-        const existingFingerprints = new Set(
-          allRecords.map(r => 
-            `${r['대회명']}__${r['소속팀']}__${r['상대팀']}__${r['선수명']}__${r['등번호']}__${r['1Q 득점']}__${r['2Q 득점']}__${r['3Q 득점']}__${r['4Q 득점']}__${r['플레잉 타임']}`
-          )
-        );
+      // If records_2025.json was not loaded, fetch from Firestore
+      if (!loaded2025) {
+        try {
+          const q = query(collection(db, 'player_records'));
+          const querySnapshot = await getDocs(q);
 
-        querySnapshot.forEach((doc) => {
-          const d = doc.data();
-          const docId = doc.id;
+          const existingIds = new Set(allRecords.map(r => r.id).filter(Boolean));
+          const existingFingerprints = new Set(
+            allRecords.map(r => 
+              `${r['대회명']}__${r['소속팀']}__${r['상대팀']}__${r['선수명']}__${r['등번호']}__${r['1Q 득점']}__${r['2Q 득점']}__${r['3Q 득점']}__${r['4Q 득점']}__${r['플레잉 타임']}`
+            )
+          );
 
-          // Skip if ID is already present
-          if (existingIds.has(docId) || (d.id && existingIds.has(d.id))) {
-            return;
-          }
+          querySnapshot.forEach((doc) => {
+            const d = doc.data();
+            const docId = doc.id;
 
-          // Skip 2026 spring records from Firestore since all 2026 spring records are already in static JSON
-          if (docId.startsWith('2026_spring_') || d['대회명'] === '제63회 춘계 전국남녀중고농구연맹전') {
-            return;
-          }
+            // Skip if ID is already present
+            if (existingIds.has(docId) || (d.id && existingIds.has(d.id))) {
+              return;
+            }
 
-          // Check fingerprint to eliminate any identical duplicate game records
-          const fp = `${d['대회명']}__${d['소속팀']}__${d['상대팀']}__${d['선수명']}__${d['등번호']}__${d['1Q 득점']}__${d['2Q 득점']}__${d['3Q 득점']}__${d['4Q 득점']}__${d['플레잉 타임']}`;
-          if (!existingFingerprints.has(fp)) {
-            existingFingerprints.add(fp);
-            existingIds.add(docId);
-            allRecords.push({ id: docId, ...d });
-          }
-        });
-      } catch (error) {
-        console.warn('Firestore fetch notice (quota/network):', error.message || error);
+            // Skip 2026 spring records from Firestore since all 2026 spring records are already in static JSON
+            if (docId.startsWith('2026_spring_') || d['대회명'] === '제63회 춘계 전국남녀중고농구연맹전') {
+              return;
+            }
+
+            // Check fingerprint to eliminate any identical duplicate game records
+            const fp = `${d['대회명']}__${d['소속팀']}__${d['상대팀']}__${d['선수명']}__${d['등번호']}__${d['1Q 득점']}__${d['2Q 득점']}__${d['3Q 득점']}__${d['4Q 득점']}__${d['플레잉 타임']}`;
+            if (!existingFingerprints.has(fp)) {
+              existingFingerprints.add(fp);
+              existingIds.add(docId);
+              allRecords.push({ id: docId, ...d });
+            }
+          });
+        } catch (error) {
+          console.warn('Firestore fetch notice (quota/network):', error.message || error);
+        }
       }
 
       // Process all records to calculate total points and assign season
